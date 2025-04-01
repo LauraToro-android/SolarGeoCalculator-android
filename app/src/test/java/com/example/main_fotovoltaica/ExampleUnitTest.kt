@@ -1,4 +1,4 @@
-package com.example.main_fotovoltaica
+package com.example.placasFV
 
 import org.junit.Test
 
