@@ -1,4 +1,4 @@
-package com.example.placasFV.ui.theme
+package com.fredypalacios.photo.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

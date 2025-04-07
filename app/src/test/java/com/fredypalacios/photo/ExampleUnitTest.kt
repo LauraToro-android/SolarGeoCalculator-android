@@ -1,4 +1,4 @@
-package com.example.placasFV
+package com.fredypalacios.photo
 
 import org.junit.Test
 
