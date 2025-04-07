@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Fotovoltaica"
+rootProject.name = "photo"
 include(":app")
- 
