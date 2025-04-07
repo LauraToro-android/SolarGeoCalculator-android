@@ -1,4 +1,4 @@
-package com.fredypalacios.photo.ui.theme
+package com.example.placas.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.fredypalacios.photo"
+    namespace = "com.example.placas"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.fredypalacios.photo"
+        applicationId = "com.example.placas"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
