@@ -19,20 +19,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.placas.R
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            LoginScreen()
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen() {
+fun LoginScreen(navController: NavController) {
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -46,6 +39,8 @@ fun LoginScreen() {
         } else {
             isError = true
         }
+
+        navController.navigate("home")
     }
 
     Column(
@@ -126,13 +121,17 @@ fun LoginScreen() {
             text = "¿Olvidaste tu contraseña?",
             color = Color(0xFF1A237E),
             fontSize = 10.sp,
-            modifier = Modifier.clickable { }
+            modifier = Modifier.clickable {
+                navController.navigate("forgot_password")
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = {},
+            onClick = {
+                navController.navigate("register")
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
@@ -148,5 +147,5 @@ fun LoginScreen() {
 @Preview(showBackground = true)
 @Composable
 fun PreviewLoginScreen() {
-    LoginScreen()
+
 }

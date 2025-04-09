@@ -1,6 +1,5 @@
 package com.example.placas.ui.screen
 
-
 import com.example.placas.R
 import android.content.Context
 import android.util.Patterns
@@ -13,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
-
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.Card
@@ -35,12 +33,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 
@@ -48,12 +43,11 @@ import androidx.navigation.compose.rememberNavController
 @Composable
 fun Preview(){
     val navController= rememberNavController()
-    LoginScreen(navController)
+    RegisterScreen(navController)
 }
 
-
 @Composable
-fun LoginScreen(navController: NavController) {
+fun RegisterScreen(navController: NavController) {
 
     val context = LocalContext.current
     var nombre by remember { mutableStateOf("") }
@@ -73,8 +67,6 @@ fun LoginScreen(navController: NavController) {
 
         RowEmail(email = email, emailChange = { email = it }, isValid = isValidEmail)
     }
-
-
 
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(
@@ -193,8 +185,6 @@ fun RowButtonLogin(
     }
 }
 
-
-
 fun login(context: Context) {
     Toast.makeText(context, "FAKE LOGIN :)", Toast.LENGTH_LONG).show()
 }
@@ -202,8 +192,6 @@ fun isPasswordValid(password: String): Boolean {
     val passwordPattern = Regex("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#\$%^&+=!]).{8,}\$")
     return password.matches(passwordPattern)
 }
-
-
 
 @Composable
 fun RowPassword(
@@ -256,6 +244,7 @@ fun RowPassword(
             )
     }
 }
+
 @Composable
 fun RowRepeatPassword(
     contrasena: String,
@@ -309,7 +298,6 @@ fun RowRepeatPassword(
     }
 }
 
-
 @Composable
 fun RowEmail(
     email: String,
@@ -356,7 +344,6 @@ fun RowImage() {
     }
 }
 
-
 @Composable
 fun RowNombre(
     nombre: String,
@@ -384,6 +371,7 @@ fun RowNombre(
         )
     }
 }
+
 @Composable
 fun RowApellidos(
     apellidos: String,

@@ -43,14 +43,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-//import androidx.navigation.NavController
+import androidx.navigation.NavController
 import com.example.placas.R
 
 
 
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(navController: NavController) {
     NestedScrolling()
 }
 
