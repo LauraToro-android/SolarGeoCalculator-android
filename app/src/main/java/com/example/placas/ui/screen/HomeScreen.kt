@@ -48,7 +48,6 @@ import com.example.placas.R
 
 
 
-
 @Composable
 fun HomeScreen(navController: NavController) {
     NestedScrolling()
@@ -100,6 +99,9 @@ fun NestedScrolling() {
         }
         item{
             Sublist1()
+        }
+        item {
+            MainScreen()
         }
     }
 }
@@ -290,6 +292,7 @@ fun Sublist1() {
             Text("Resetear Todo")
         }
     }
+
 }
 
 @Preview(showSystemUi = true)
