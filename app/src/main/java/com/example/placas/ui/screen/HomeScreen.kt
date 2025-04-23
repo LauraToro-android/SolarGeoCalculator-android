@@ -103,9 +103,9 @@ fun NestedScrolling() {
         item {
             MainScreen()
         }
-        item {
+        /*item {
             RadiationCalculatorScreen()
-        }
+        }*/
     }
 }
 

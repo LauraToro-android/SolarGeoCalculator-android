@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -18,20 +19,23 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.placas.services.LocationIQService
 import com.example.placas.services.OpenStreetMapService
+import com.example.placas.services.OpenStreetMapService.crearMapaConUbicacion
 import com.example.placas.services.OpenStreetMapService.obtenerUbicacion
+import com.example.placas.services.RadiationService
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen()
@@ -42,8 +46,8 @@ fun MainScreen()
         SolicitarPermisoUbicacion()
         Spacer(modifier = Modifier.height(20.dp))
         Geocode()
-        Spacer(modifier = Modifier.height(20.dp))
-        ReverseGeoCode()
+        //Spacer(modifier = Modifier.height(20.dp))
+        //ReverseGeoCode()
     }
 
 }
@@ -53,6 +57,9 @@ fun Geocode()
 {
     var text by remember { mutableStateOf("") }
     var result by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
+    var radiation by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
 
     Surface(
         modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -64,7 +71,7 @@ fun Geocode()
     {
         Column(modifier = Modifier.padding(20.dp))
         {
-            Text("Introduce dirección:")
+            Text("Introduce dirección: (Para verificar radiación anual solar)")
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = text,
@@ -78,17 +85,35 @@ fun Geocode()
                 // Llama a la API solo al pulsar el botón
                 LocationIQService.geocode(text) { lat, lon, name ->
                     result = "Lat: $lat, Lon: $lon\nLugar: $name"
+
+                    coroutineScope.launch {
+                        val resultado = RadiationService.fetchRadiation(lat.toString(), lon.toString())
+                        if (resultado.isSuccess) {
+                            radiation = resultado.getOrNull().orEmpty()
+                            error = ""
+                        } else {
+                            error = resultado.exceptionOrNull()?.message.orEmpty()
+                            radiation = ""
+                        }
+                    }
                 }
             }, colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF98133E),
                 contentColor = Color.White
             )) {
-                Text("Buscar coordenadas")
+                Text("Consultar radiación solar")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
             Text(result)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (radiation.isNotEmpty()) {
+                Text("Radiación anual: $radiation")
+            }
+
+            if (error.isNotEmpty()) {
+                Text("Error: $error", color = MaterialTheme.colorScheme.error)
+            }
         }
 
     }
@@ -197,8 +222,11 @@ fun OpenStreetMapView()
 fun OpenStreetMapViewWithUbication(lat: Double, lon: Double)
 {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var radiation by remember { mutableStateOf("") }
     var resultCoord by remember { mutableStateOf("") }
     var direccion by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
 
     // Inicializa configuración solo una vez
     LaunchedEffect(Unit) {
@@ -214,7 +242,7 @@ fun OpenStreetMapViewWithUbication(lat: Double, lon: Double)
     {
         AndroidView(
             factory = {
-                OpenStreetMapService.crearMapaConUbicacion(
+                crearMapaConUbicacion(
                     context = it,
                     lat = lat,
                     lon = lon
@@ -238,17 +266,35 @@ fun OpenStreetMapViewWithUbication(lat: Double, lon: Double)
                 LocationIQService.geocode(direccion) { lat, lon, name ->
                     resultCoord = "Lat: $lat, Lon: $lon\nLugar: $name"
                 }
+
+                coroutineScope.launch {
+                    val resultado = RadiationService.fetchRadiation(lat.toString(), lon.toString())
+                    if (resultado.isSuccess) {
+                        radiation = resultado.getOrNull().orEmpty()
+                        error = ""
+                    } else {
+                        error = resultado.exceptionOrNull()?.message.orEmpty()
+                        radiation = ""
+                    }
+                }
             }
         }, colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF98133E),
             contentColor = Color.White
         ))
         {
-            Text("Revelar ubicación y coordenadas")
+            Text("Consultar radiación solar")
         }
-
         Spacer(modifier = Modifier.height(16.dp))
         Text(resultCoord)
+        Spacer(modifier = Modifier.height(8.dp))
+        if (radiation.isNotEmpty()) {
+            Text("Radiación anual: $radiation")
+        }
+
+        if (error.isNotEmpty()) {
+            Text("Error: $error", color = MaterialTheme.colorScheme.error)
+        }
     }
 }
 
@@ -281,7 +327,7 @@ fun SolicitarPermisoUbicacion()
 
             location?.let {
                 OpenStreetMapViewWithUbication(it.latitude, it.longitude)
-            } ?: Text(modifier = Modifier.padding(16.dp), text = "Cargando ubicación...")
+            } ?: OpenStreetMapView()
         }
 
         permisoUbicacion.status.shouldShowRationale ->
@@ -296,11 +342,4 @@ fun SolicitarPermisoUbicacion()
             OpenStreetMapView() // Se muestra el mapa sin ubicación aquí
         }
     }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MainScreen()
 }
