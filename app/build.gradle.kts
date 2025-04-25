@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.crashlytics)
 }
 
 android {
@@ -75,5 +77,11 @@ dependencies {
 
     implementation( "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
+
+    //Dependencias Firebase
+    implementation(platform(libs.firebase.boom))
+    implementation(libs.firebase.crash)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
 
 }

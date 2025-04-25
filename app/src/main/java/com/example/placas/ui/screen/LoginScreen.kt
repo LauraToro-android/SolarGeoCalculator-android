@@ -1,6 +1,6 @@
 package com.example.placas.ui.screen
 
-import androidx.activity.compose.setContent
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,30 +11,38 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.placas.R
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
+    val context = LocalContext.current
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     fun handleLogin() {
-        if (username == "usuario" && password == "contraseña") {
-            isError = false
-        } else {
-            isError = true
-        }
-
-        navController.navigate("home")
+        isLoading = true
+        auth.signInWithEmailAndPassword(username, password)
+            .addOnCompleteListener { task ->
+                isLoading = false
+                if (task.isSuccessful) {
+                    Toast.makeText(context, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
+                    navController.navigate("home")
+                } else {
+                    isError = true
+                    Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                }
+            }
     }
 
     LazyColumn(
@@ -55,8 +63,11 @@ fun LoginScreen(navController: NavController) {
         item {
             OutlinedTextField(
                 value = username,
-                onValueChange = { username = it },
-                label = { Text("Usuario") },
+                onValueChange = {
+                    username = it
+                    isError = false
+                },
+                label = { Text("Correo electrónico") },
                 isError = isError,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -75,7 +86,10 @@ fun LoginScreen(navController: NavController) {
         item {
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = {
+                    password = it
+                    isError = false
+                },
                 label = { Text("Contraseña") },
                 visualTransformation = PasswordVisualTransformation(),
                 isError = isError,
@@ -102,6 +116,7 @@ fun LoginScreen(navController: NavController) {
         item {
             Button(
                 onClick = { handleLogin() },
+                enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(8.dp),
@@ -110,7 +125,7 @@ fun LoginScreen(navController: NavController) {
                 )
             ) {
                 Text(
-                    text = "Iniciar sesión",
+                    text = if (isLoading) "Iniciando..." else "Iniciar sesión",
                     color = Color.White
                 )
             }
@@ -143,11 +158,4 @@ fun LoginScreen(navController: NavController) {
             }
         }
     }
-
 }
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewLoginScreen() {
-}
-
