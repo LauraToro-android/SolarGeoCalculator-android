@@ -5,13 +5,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.TopAppBar
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,7 +23,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -41,15 +45,50 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.placas.R
+import androidx.compose.foundation.layout.PaddingValues
+import com.example.placas.ui.components.DropDownMenu
+import androidx.compose.material3.TopAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 
 @Composable
-fun HomeScreen(navController: NavController) {
-    NestedScrolling()
+fun HomeScreen(navController: NavController){
+    Scaffold(
+        topBar = {Toolbar(navController)},
+        content = { padding -> Content(
+            padding,
+            navController = navController
+        ) }
+    )
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Toolbar(navController: NavController){
+    TopAppBar(
+        title = { Text(text = "Placas") },
+        colors = TopAppBarDefaults.mediumTopAppBarColors(
+            containerColor = Color.Transparent
+        ),
+        actions = { DropDownMenu(
+            onSettingsClick = { navController.navigate("Settings") }
+            , onLogOutClick = { navController.navigate("login") }) }
+    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Content(
+    paddingValues: PaddingValues,
+    navController: NavController) {
+
+    NestedScrolling()
+
+}
+
 
 const val motto: String = "Formación y Empleo"
 
@@ -59,14 +98,20 @@ fun getCompanyName(): String {
 }
 
 @Composable
-fun ShowTitle() {
+fun ShowTitle()
+{
     Spacer(modifier = Modifier.height(30.dp))
-    Text(
+    Row(
+        modifier = Modifier
+        .fillMaxWidth()
+    ) { Text(
         text = getCompanyName(),
         color = Color(0xFF043f70),
         fontSize = 25.sp,
         fontWeight = FontWeight.Bold,
     )
+    }
+
     Text(
         text = motto
     )
@@ -85,12 +130,14 @@ fun ShowBanner() {
 
 @Composable
 fun NestedScrolling() {
+
     LazyColumn (
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp)
     ){
         item{
-            ShowTitle()
+            ShowTitle(
+            )
         }
         item{
             ShowBanner()
@@ -253,7 +300,6 @@ fun EnergyUsageScreen() {
         }
     }
 }
-
 @Preview(showSystemUi = true)
 @Composable
 fun ShowMyFirstColumn() {
