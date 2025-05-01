@@ -22,11 +22,31 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.placas.ui.screen.ForgotPasswordScreen
 import com.example.placas.ui.screen.SettingsScreen
+//Imports para hacer pruebas en main activity// se puede eliminar despuoes
+import kotlinx.coroutines.launch
+import android.util.Log
+import androidx.lifecycle.lifecycleScope
+import com.example.placas.data.calculate.CalculoNPlacas
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //Pruebas calculo0 de placas
+        //EJEMPLO DE USO:
+        //CalculoNPlacas(latitud, longitud, anguloInclinacion, mes, energiaCalculada)
+        val calculo = CalculoNPlacas(
+            latitud = 41.553645,
+            longitud = -0.707426,
+            anguloInclinacion = 25,
+            mes = 12,
+            energiaCalculada = 6000
+        )
+
+        lifecycleScope.launch {
+            val nPlacas = calculo.calcularNumeroPlacas()
+            Log.d("Resultado", "Número necesario de placas solares: $nPlacas")
+        }
         enableEdgeToEdge()
         setContent {
 
