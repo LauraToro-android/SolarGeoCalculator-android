@@ -1,6 +1,5 @@
 package com.example.placas.ui.screen
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,21 +23,33 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.ui.draw.shadow
 
-
+// Elemento para añadir a la futura base de datos
+data class Electrodomestico(
+    var nombre: String,
+    var potencia: Float = 0f,
+    var consumo: Float = 0f,
+    var franjaHoraria: String = "" // Esta no sé si ponerlo como float o incluso añadir un boton para hacerlo mas visual
+)
 
 @Composable
 fun inicioPantalla() {
     var items by rememberSaveable {
         mutableStateOf(
             listOf(
-                "Frigorífico", "Lavadora", "Microondas", "Plancha",
-                "Lavavajillas", "Horno", "Secadora"
+                Electrodomestico("Frigorífico"),
+                Electrodomestico("Lavadora"),
+                Electrodomestico("Microondas"),
+                Electrodomestico("Plancha"),
+                Electrodomestico("Lavavajillas"),
+                Electrodomestico("Horno"),
+                Electrodomestico("Secadora")
             )
         )
     }
 
     var nuevoItem by rememberSaveable { mutableStateOf("") }
-// fondo y colores que hay que cambiar
+
+    // fondo y colores que hay que cambiar
     val customContainerColor = Color(0xFFE8DFDF)
     val focusedBorderColor = Color(0xFF016E6E)
     val unfocusedBorderColor = Color.Gray
@@ -88,23 +99,36 @@ fun inicioPantalla() {
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                items(items) { item ->
+                items(items) { electrodomestico ->
                     // Card con botón de eliminar y opción para editar
                     CCard(
-                        item = item,
-                        onDelete = { items = items - item }, // Eliminar item
-                        onEdit = { newItem ->
-                            // Editar el item, reemplazando el viejo por el nuevo
-                            items = items.map { if (it == item) newItem else it }
+                        electrodomestico = electrodomestico,
+                        onDelete = {
+                            items = items.filter { it != electrodomestico } // Eliminar por objeto
+                        },
+                        onEdit = { updatedItem ->
+                            items = items.map { if (it == electrodomestico) updatedItem else it }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp)
-                            .shadow(8.dp, shape = MaterialTheme.shapes.medium), // Sombra y borde redondeado
+                            .shadow(
+                                8.dp,
+                                shape = MaterialTheme.shapes.medium
+                            ), // Sombra y borde redondeado
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(
                             containerColor = customContainerColor
-                        )
+                        ),
+                        onFranjaClick = { franja ->
+                            items = items.map {
+                                if (it == electrodomestico) {
+                                    it.copy(franjaHoraria = franja)
+                                } else {
+                                    it
+                                }
+                            }
+                        }
                     )
                 }
             }
@@ -113,7 +137,8 @@ fun inicioPantalla() {
             Button(
                 onClick = {
                     if (nuevoItem.isNotBlank()) {
-                        items = items + nuevoItem.trim()
+                        val electrodomestico = Electrodomestico(nuevoItem.trim())
+                        items = items + electrodomestico
                         nuevoItem = ""
                     }
                 },
@@ -132,71 +157,138 @@ fun inicioPantalla() {
 
 @Composable
 fun CCard(
-    item: String,
+    electrodomestico: Electrodomestico,
     onDelete: () -> Unit,
-    onEdit: (String) -> Unit,
+    onEdit: (Electrodomestico) -> Unit,
     modifier: Modifier,
     shape: CornerBasedShape,
-    colors: CardColors
+    colors: CardColors,
+    onFranjaClick: (String) -> Unit
 ) {
     var isEditing by remember { mutableStateOf(false) }
-    var editedText by remember { mutableStateOf(item) }
+    var editedElectrodomestico by remember { mutableStateOf(electrodomestico) }
 
     Card(
         modifier = modifier,
         shape = shape,
         colors = colors
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Column(modifier = Modifier.padding(16.dp)) {
             if (isEditing) {
                 TextField(
-                    value = editedText,
-                    onValueChange = { editedText = it },
-                    modifier = Modifier.weight(1f),
+                    value = editedElectrodomestico.nombre,
+                    onValueChange = {
+                        editedElectrodomestico = editedElectrodomestico.copy(nombre = it)
+                    },
                     label = { Text("Editar Electrodoméstico") },
                     colors = TextFieldDefaults.colors(
                         focusedIndicatorColor = Color(0xFF016E6E),
                         unfocusedIndicatorColor = Color.Gray
                     ),
-                    shape = MaterialTheme.shapes.small
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                IconButton(
-                    onClick = {
-                        onEdit(editedText)
-                        isEditing = false
-                    }
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = editedElectrodomestico.potencia.toString(),
+                    onValueChange = {
+                        editedElectrodomestico =
+                            editedElectrodomestico.copy(potencia = it.toFloatOrNull() ?: 0f)
+                    },
+                    label = { Text("Editar Potencia (W)") },
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color(0xFF016E6E),
+                        unfocusedIndicatorColor = Color.Gray
+                    ),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = editedElectrodomestico.consumo.toString(),
+                    onValueChange = {
+                        editedElectrodomestico =
+                            editedElectrodomestico.copy(consumo = it.toFloatOrNull() ?: 0f)
+                    },
+                    label = { Text("Editar Consumo (KWh)") },
+                    colors = TextFieldDefaults.colors(
+                        focusedIndicatorColor = Color(0xFF016E6E),
+                        unfocusedIndicatorColor = Color.Gray
+                    ),
+                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Confirmar edición")
+                    Button(
+                        onClick = {
+                            onEdit(editedElectrodomestico)
+                            isEditing = false
+                        },
+                        enabled = editedElectrodomestico.nombre.isNotBlank()
+                    ) {
+                        Text("Guardar")
+                    }
+                    OutlinedButton(onClick = {
+                        isEditing = false
+                        editedElectrodomestico = electrodomestico
+                    }) {
+                        Text("Cancelar")
+                    }
                 }
             } else {
-                Text(
-                    text = item,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(
-                    onClick = { isEditing = true }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Filled.Edit, contentDescription = "Editar")
+                    Text(
+                        text = electrodomestico.nombre,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.sp),
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(
+                        onClick = { isEditing = true }
+                    ) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Editar")
+                    }
+                    IconButton(
+                        onClick = onDelete
+                    ) {
+                        Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+                    }
                 }
-                IconButton(
-                    onClick = onDelete
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Icon(Icons.Filled.Delete, contentDescription = "Eliminar")
+                    FranjaButton("00:00 - 02:00", electrodomestico.franjaHoraria, onFranjaClick)
+                    FranjaButton("02:00 - 04:00", electrodomestico.franjaHoraria, onFranjaClick)
+                    FranjaButton("04:00 - 06:00", electrodomestico.franjaHoraria, onFranjaClick)
                 }
             }
         }
     }
 }
+    @Composable
+    fun FranjaButton(franja: String, selectedFranja: String, onFranjaClick: (String) -> Unit) {
+        Button(
+            onClick = { onFranjaClick(franja) },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (franja == selectedFranja) Color(0xFF016E6E) else Color.Gray
+            )
+        ) {
+            Text(text = franja, color = Color.White)
+        }
+    }
+
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewInicioPantalla() {
-        inicioPantalla()
-    }
-
+    inicioPantalla()
+}
