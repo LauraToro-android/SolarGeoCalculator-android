@@ -6,7 +6,6 @@ import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
-import io.ktor.http.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -42,7 +41,7 @@ class CalculoNPlacas(
     private val mes: Int,
     private val potenciaPlacaW: Int = 500,
     private val margen: Double = 0.8,
-    private val energiaCalculada: Int = 3000
+    private val energiaCalculada: Int = 6000
 ) {
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
