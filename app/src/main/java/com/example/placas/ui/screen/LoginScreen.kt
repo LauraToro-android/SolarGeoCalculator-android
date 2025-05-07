@@ -42,7 +42,7 @@ fun LoginScreen(navController: NavController) {
             .fillMaxSize()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp) // Espaciado entre los elementos
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
             Image(
@@ -143,6 +143,7 @@ fun LoginScreen(navController: NavController) {
             }
         }
     }
+
 }
 
 @Preview(showBackground = true)
