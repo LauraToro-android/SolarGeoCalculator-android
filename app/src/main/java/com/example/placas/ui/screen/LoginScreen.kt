@@ -157,5 +157,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
                 Text("Registrarse", color = Color.White)
             }
         }
+
+
     }
 }
