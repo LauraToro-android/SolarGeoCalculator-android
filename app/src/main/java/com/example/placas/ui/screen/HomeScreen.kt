@@ -5,8 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.TopAppBar
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,21 +14,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,19 +38,56 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.placas.R
-
-
+import androidx.compose.foundation.layout.PaddingValues
+import com.example.placas.ui.components.DropDownMenu
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import com.example.placas.data.calculate.CalculoNPlacas
+import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(navController: NavController) {
-    NestedScrolling()
+fun HomeScreen(navController: NavController){
+    Scaffold(
+        topBar = {Toolbar(navController)},
+        content = { padding -> Content(
+            padding,
+            navController = navController
+        ) }
+    )
 }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Toolbar(navController: NavController){
+    TopAppBar(
+        title = { Text(text = "Placas") },
+        colors = TopAppBarDefaults.mediumTopAppBarColors(
+            containerColor = Color.Transparent
+        ),
+        actions = { DropDownMenu(
+            onSettingsClick = { navController.navigate("Settings") }
+            , onLogOutClick = { navController.navigate("login") }) }
+    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun Content(
+    paddingValues: PaddingValues,
+    navController: NavController) {
+
+    NestedScrolling()
+
+}
+
 
 const val motto: String = "Formación y Empleo"
 
@@ -61,14 +97,20 @@ fun getCompanyName(): String {
 }
 
 @Composable
-fun ShowTitle() {
+fun ShowTitle()
+{
     Spacer(modifier = Modifier.height(30.dp))
-    Text(
+    Row(
+        modifier = Modifier
+        .fillMaxWidth()
+    ) { Text(
         text = getCompanyName(),
         color = Color(0xFF043f70),
         fontSize = 25.sp,
         fontWeight = FontWeight.Bold,
     )
+    }
+
     Text(
         text = motto
     )
@@ -87,21 +129,26 @@ fun ShowBanner() {
 
 @Composable
 fun NestedScrolling() {
+
     LazyColumn (
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp)
     ){
         item{
-            ShowTitle()
+            ShowTitle(
+            )
         }
         item{
             ShowBanner()
         }
-        item{
-            Sublist1()
+        item {
+            EnergyUsageScreen()
         }
         item {
             MainScreen()
+        }
+        item {
+            MethodsScreen()
         }
         /*item {
             RadiationCalculatorScreen()
@@ -110,8 +157,8 @@ fun NestedScrolling() {
 }
 
 @Composable
-fun Sublist1() {
-    val context = LocalContext.current // Get the context to show the Toast
+fun EnergyUsageScreen() {
+    val context = LocalContext.current
     val imageList = listOf(
         R.drawable.tv2 to "Televisor",
         R.drawable.iron2 to "Plancha",
@@ -137,40 +184,33 @@ fun Sublist1() {
     )
 
     var selectedDevice by remember { mutableStateOf<String?>(null) }
-    val deviceCountMap = remember { mutableStateMapOf<String, Int>() }
-    val usageHoursMap = remember { mutableStateMapOf<String, String>() } // Save usage hours per device
+    val hourRanges = (0 until 24 step 2).map { it to (it + 2) }
+    var selectedRange by remember { mutableStateOf<Pair<Int, Int>?>(null) }
 
-    var dailySunHours by remember { mutableStateOf("4") }
-    var panelPower by remember { mutableStateOf("400") }
+    val hourDeviceList = remember { mutableStateListOf<Triple<String, Pair<Int, Int>, Int>>() }
 
-    // Total consumption calculation
-    val totalConsumption = deviceCountMap.entries.sumOf { (name, count) ->
-        val usageHours = usageHoursMap[name]?.toIntOrNull() ?: 0
-        (powerConsumption[name] ?: 0) * count * usageHours
-    }
+    var latitud by remember { mutableStateOf("41.553645") }
+    var longitud by remember { mutableStateOf("-0.707426") }
+    var angulo by remember { mutableStateOf("25") }
+    var mes by remember { mutableStateOf("12") }
+    var potenciaPlacaW by remember { mutableStateOf("500") }
+    var margen by remember { mutableStateOf("0.8") }
 
-    // Calculate the number of panels required based on the total consumption and panel power
-    val panelsRequired = if (dailySunHours.toFloatOrNull() != null && panelPower.toFloatOrNull() != null) {
-        val productionPerPanel = (panelPower.toFloat()) * dailySunHours.toFloat()
-        if (productionPerPanel > 0) totalConsumption / productionPerPanel else 0.0
-    } else 0.0
+    var numeroPlacas by remember { mutableStateOf<Int?>(null) }
+    val coroutineScope = rememberCoroutineScope()
 
     Column(modifier = Modifier.padding(16.dp)) {
-        // Display device list in a horizontal scrollable row
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+
+        // Selección de dispositivos
+        Text("Selecciona un electrodoméstico:", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(imageList) { (imageResId, deviceName) ->
                 val isSelected = selectedDevice == deviceName
-
-                // Display each device as a clickable card
                 Card(
                     modifier = Modifier
-                        .size(120.dp)
+                        .size(100.dp)
                         .clickable { selectedDevice = deviceName },
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.elevatedCardElevation(6.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
                     )
@@ -179,7 +219,7 @@ fun Sublist1() {
                         Image(
                             painter = painterResource(id = imageResId),
                             contentDescription = deviceName,
-                            modifier = Modifier.size(110.dp).padding(8.dp)
+                            modifier = Modifier.size(80.dp).padding(8.dp)
                         )
                     }
                 }
@@ -188,115 +228,148 @@ fun Sublist1() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Show details for the selected device
-        selectedDevice?.let { name ->
-            val power = powerConsumption[name] ?: 0
-            val count = deviceCountMap[name] ?: 0
-            val usageHours = usageHoursMap[name] ?: "0"
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Seleccionado: $name",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF163D6D)
-                )
-
-                Text(text = "Consumo por unidad por hora: $power W", style = MaterialTheme.typography.bodyMedium)
-
-                // Input for daily usage hours
-                OutlinedTextField(
-                    value = usageHours,
-                    onValueChange = { usageHoursMap[name] = it },
-                    label = { Text("Horas de uso diario") },
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                )
-
-                // Buttons to increase or decrease the device count
-                Row(modifier = Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { deviceCountMap[name] = count + 1 },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF163D6D),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text("Añadir")
-                    }
-                    Button(onClick = { if (count > 0) deviceCountMap[name] = count - 1 },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF98133E),
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text("Eliminar")
+        // Selección de rango horario
+        Text("Selecciona la franja horaria:", fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(hourRanges) { range ->
+                val isSelected = selectedRange == range
+                Card(
+                    modifier = Modifier
+                        .width(120.dp)
+                        .height(60.dp)
+                        .clickable { selectedRange = range },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Text("${range.first}:00 - ${range.second}:00")
                     }
                 }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(text = "Cantidad: $count", style = MaterialTheme.typography.bodyLarge)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Show total consumption
-        Text(text = "Consumo total diario: $totalConsumption Wh", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-
-        // Input for daily sun hours
-        OutlinedTextField(
-            value = dailySunHours,
-            onValueChange = { dailySunHours = it },
-            label = { Text("Horas de sol al día") },
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        )
-
-        // Input for solar panel power
-        OutlinedTextField(
-            value = panelPower,
-            onValueChange = { panelPower = it },
-            label = { Text("Potencia de la placa solar (W)") },
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Show the number of panels required
-        Text(
-            text = "Placas necesarias: ${String.format("%.2f", panelsRequired)}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF163D6D),
-            fontSize = 20.sp
-        )
-
-        // Button to reset all data
         Button(
             onClick = {
-                // Reset all data
-                selectedDevice = null
-                deviceCountMap.clear()
-                usageHoursMap.clear()
-                dailySunHours = "4"
-                panelPower = "400"
-
-                // Show the Toast message
-                Toast.makeText(context, "Datos reseteados", Toast.LENGTH_SHORT).show()
+                if (selectedDevice != null && selectedRange != null) {
+                    hourDeviceList.add(Triple(selectedDevice!!, selectedRange!!, 1))
+                    Toast.makeText(context, "Añadido correctamente", Toast.LENGTH_SHORT).show()
+                }
             },
-            modifier = Modifier.padding(top = 16.dp),
+            modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF96133D),
+                containerColor = Color(0xFF163D6D),
                 contentColor = Color.White
             )
         ) {
-            Text("Resetear Todo")
+            Text("Añadir a la tabla")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Tabla de dispositivos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+        hourDeviceList.forEachIndexed { index, (name, range, count) ->
+            val power = powerConsumption[name] ?: 0
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(name)
+                    Text("${range.first}:00-${range.second}:00")
+                }
+                Text("x$count")
+                Text("${power * count} W")
+                IconButton(onClick = { hourDeviceList.removeAt(index) }) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val grouped = hourDeviceList.groupBy { it.second }
+        val maxEntry = grouped.maxByOrNull { entry ->
+            entry.value.sumOf { (name, _, count) ->
+                (powerConsumption[name] ?: 0) * count
+            }
+        }
+
+        maxEntry?.let { (range, items) ->
+            val total = items.sumOf { (name, _, count) -> (powerConsumption[name] ?: 0) * count }
+            Text(
+                text = "Mayor consumo en: ${range.first}:00-${range.second}:00 con $total W",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF163D6D)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Cálculo de placas solares", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF163D6D))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // TextFields para parámetros
+        TextField(value = latitud, onValueChange = { latitud = it }, label = { Text("Latitud") })
+        TextField(value = longitud, onValueChange = { longitud = it }, label = { Text("Longitud") })
+        TextField(value = angulo, onValueChange = { angulo = it }, label = { Text("Ángulo de inclinación") })
+        TextField(value = mes, onValueChange = { mes = it }, label = { Text("Mes (1-12)") })
+        TextField(value = potenciaPlacaW, onValueChange = { potenciaPlacaW = it }, label = { Text("Potencia de placa (W)") })
+        TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                val lat = latitud.toDoubleOrNull()
+                val lon = longitud.toDoubleOrNull()
+                val angle = angulo.toIntOrNull()
+                val month = mes.toIntOrNull()
+                val potencia = potenciaPlacaW.toIntOrNull()
+                val margenValor = margen.toDoubleOrNull()
+
+                if (lat != null && lon != null && angle != null && month != null && potencia != null && margenValor != null) {
+                    coroutineScope.launch {
+                        val calculo = CalculoNPlacas(
+                            latitud = lat,
+                            longitud = lon,
+                            anguloInclinacion = angle,
+                            mes = month,
+                            potenciaPlacaW = potencia,
+                            margen = margenValor
+                        )
+                        numeroPlacas = calculo.calcularNumeroPlacas()
+                    }
+                } else {
+                    Toast.makeText(context, "Por favor, rellena todos los campos correctamente", Toast.LENGTH_SHORT).show()
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF163D6D), contentColor = Color.White)
+        ) {
+            Text("Calcular número de placas")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        numeroPlacas?.let {
+            Text("Número de placas: $it", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
-
 }
+
+
 
 @Preview(showSystemUi = true)
 @Composable
