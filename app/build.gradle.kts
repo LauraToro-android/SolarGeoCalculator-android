@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.crashlytics
     kotlin("plugin.serialization") version "1.9.0"
 }
 
@@ -86,4 +89,10 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
-}
+
+    //Dependencias Firebase
+    implementation(platform(libs.firebase.boom))
+    implementation(libs.firebase.crash)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+
