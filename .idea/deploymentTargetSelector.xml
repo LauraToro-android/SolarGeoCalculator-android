@@ -13,7 +13,7 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="PreviewInicioPantalla">
+      <SelectionState runConfigName="ShowMyFirstColumn">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

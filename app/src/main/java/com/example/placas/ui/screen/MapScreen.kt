@@ -36,6 +36,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.launch
+import com.example.placas.data.calculate.Soporte
 
 @Composable
 fun MainScreen()
@@ -343,3 +344,4 @@ fun SolicitarPermisoUbicacion()
         }
     }
 }
+

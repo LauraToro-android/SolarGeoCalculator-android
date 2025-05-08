@@ -86,4 +86,5 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
+    implementation ("androidx.compose.ui:ui-viewbinding:<version>")
 }
