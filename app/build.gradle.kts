@@ -7,6 +7,8 @@ plugins {
     kotlin("plugin.serialization") version "1.9.0"
 }
 
+
+
 android {
     namespace = "com.example.placas"
     compileSdk = 35
