@@ -38,6 +38,9 @@ import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.launch
 import com.example.placas.data.calculate.Soporte
 
+import com.example.placas.data.calculate.CalculoNPlacas
+import com.example.placas.data.calculate.Soporte.calcularMesSiEsNecesario
+
 @Composable
 fun MainScreen()
 {
@@ -82,28 +85,65 @@ fun Geocode()
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = {
-                // Llama a la API solo al pulsar el botón
-                LocationIQService.geocode(text) { lat, lon, name ->
-                    result = "Lat: $lat, Lon: $lon\nLugar: $name"
-
+            val context = LocalContext.current
+            Button(
+                onClick = {
                     coroutineScope.launch {
-                        val resultado = RadiationService.fetchRadiation(lat.toString(), lon.toString())
-                        if (resultado.isSuccess) {
-                            radiation = resultado.getOrNull().orEmpty()
-                            error = ""
+                        if (text.isNotBlank()) {
+                            // Dirección introducida a mano
+                            LocationIQService.geocode(text) { lat, lon, name ->
+                                result = "Ubicación manual: $name\nLat: $lat, Lon: $lon"
+                                Soporte.latitud = lat.toDoubleOrNull()
+                                Soporte.longitud = lon.toDoubleOrNull()
+
+                                launch {
+                                    val peorMes = Soporte.calcularMesSiEsNecesario()
+                                    if (peorMes != null) {
+                                        calcularYMostrarResultado(
+                                            lat = lat.toDoubleOrNull(),
+                                            lon = lon.toDoubleOrNull(),
+                                            peorMes = peorMes
+                                        )
+                                    } else {
+                                        error = "Error al obtener el peor mes."
+                                    }
+                                }
+                            }
                         } else {
-                            error = resultado.exceptionOrNull()?.message.orEmpty()
-                            radiation = ""
+                            // Ubicación del dispositivo
+                            Soporte.obtenerUbicacionSiEsNecesario(context) {
+                                val lat = Soporte.latitud
+                                val lon = Soporte.longitud
+                                if (lat != null && lon != null) {
+                                    result = "Ubicación del dispositivo: Lat: $lat, Lon: $lon"
+
+                                    launch {
+                                        val peorMes = Soporte.calcularMesSiEsNecesario()
+                                        if (peorMes != null) {
+                                            calcularYMostrarResultado(
+                                                lat = lat,
+                                                lon = lon,
+                                                peorMes = peorMes
+                                            )
+                                        } else {
+                                            error = "Error al obtener el peor mes."
+                                        }
+                                    }
+                                } else {
+                                    error = "No se pudo obtener la ubicación del dispositivo."
+                                }
+                            }
                         }
                     }
-                }
-            }, colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF98133E),
-                contentColor = Color.White
-            )) {
-                Text("Consultar radiación solar")
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF98133E),
+                    contentColor = Color.White
+                )
+            ) {
+                Text("Calcular número de placas")
             }
+
 
             Spacer(modifier = Modifier.height(16.dp))
             Text(result)
@@ -345,3 +385,34 @@ fun SolicitarPermisoUbicacion()
     }
 }
 
+suspend fun calcularYMostrarResultado(
+    lat: Double?,
+    lon: Double?,
+    peorMes: Int
+) {
+    var error: String = ""
+    var radiation: String = ""
+    if (lat == null || lon == null) {
+        error = "Latitud o longitud no válidas."
+        return
+    }
+
+    val calculador = CalculoNPlacas(
+        latitud = lat,
+        longitud = lon,
+        anguloInclinacion = Soporte.anguloInclinacion,
+        mes = peorMes,
+        potenciaPlacaW = Soporte.potenciaPlacaW,
+        margen = Soporte.margen,
+        energiaCalculada = Soporte.energiaCalculada
+    )
+
+    val numeroPlacas = calculador.calcularNumeroPlacas()
+    if (numeroPlacas > 0) {
+        radiation = "Se requieren $numeroPlacas placas para cubrir la demanda en el peor mes."
+        error = ""
+    } else {
+        radiation = ""
+        error = "No se pudo calcular el número de placas."
+    }
+}
