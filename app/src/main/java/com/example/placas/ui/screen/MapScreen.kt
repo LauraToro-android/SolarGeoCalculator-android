@@ -2,6 +2,7 @@ package com.example.placas.ui.screen
 
 import android.Manifest
 import android.location.Location
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -85,56 +86,30 @@ fun Geocode()
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            val context = LocalContext.current
+
+
+            val isReady = remember { mutableStateOf(false) }
             Button(
                 onClick = {
-                    coroutineScope.launch {
-                        if (text.isNotBlank()) {
-                            // Dirección introducida a mano
-                            LocationIQService.geocode(text) { lat, lon, name ->
-                                result = "Ubicación manual: $name\nLat: $lat, Lon: $lon"
-                                Soporte.latitud = lat.toDoubleOrNull()
-                                Soporte.longitud = lon.toDoubleOrNull()
 
-                                launch {
-                                    val peorMes = Soporte.calcularMesSiEsNecesario()
-                                    if (peorMes != null) {
-                                        calcularYMostrarResultado(
-                                            lat = lat.toDoubleOrNull(),
-                                            lon = lon.toDoubleOrNull(),
-                                            peorMes = peorMes
-                                        )
-                                    } else {
-                                        error = "Error al obtener el peor mes."
-                                    }
-                                }
-                            }
-                        } else {
-                            // Ubicación del dispositivo
-                            Soporte.obtenerUbicacionSiEsNecesario(context) {
-                                val lat = Soporte.latitud
-                                val lon = Soporte.longitud
-                                if (lat != null && lon != null) {
-                                    result = "Ubicación del dispositivo: Lat: $lat, Lon: $lon"
 
-                                    launch {
-                                        val peorMes = Soporte.calcularMesSiEsNecesario()
-                                        if (peorMes != null) {
-                                            calcularYMostrarResultado(
-                                                lat = lat,
-                                                lon = lon,
-                                                peorMes = peorMes
-                                            )
-                                        } else {
-                                            error = "Error al obtener el peor mes."
-                                        }
-                                    }
-                                } else {
-                                    error = "No se pudo obtener la ubicación del dispositivo."
-                                }
+                    // Llama a la API solo al pulsar el botón
+                    LocationIQService.geocode(text) { lat, lon, name ->
+                        result = "Lat: $lat, Lon: $lon\nLugar: $name"
+
+                        coroutineScope.launch {
+                            val resultado = RadiationService.fetchRadiation(lat.toString(), lon.toString())
+                            if (resultado.isSuccess) {
+                                radiation = resultado.getOrNull().orEmpty()
+                                error = ""
+                            } else {
+                                error = resultado.exceptionOrNull()?.message.orEmpty()
+                                radiation = ""
                             }
                         }
                     }
+
+
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF98133E),
@@ -193,6 +168,8 @@ fun ReverseGeoCode()
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = {
+
+
 
                 if (LocationIQService.coordenadasValidas(lat.toDouble(), lon.toDouble()))
                 {
@@ -383,36 +360,5 @@ fun SolicitarPermisoUbicacion()
             OpenStreetMapView() // Se muestra el mapa sin ubicación aquí
         }
     }
-}
 
-suspend fun calcularYMostrarResultado(
-    lat: Double?,
-    lon: Double?,
-    peorMes: Int
-) {
-    var error: String = ""
-    var radiation: String = ""
-    if (lat == null || lon == null) {
-        error = "Latitud o longitud no válidas."
-        return
-    }
-
-    val calculador = CalculoNPlacas(
-        latitud = lat,
-        longitud = lon,
-        anguloInclinacion = Soporte.anguloInclinacion,
-        mes = peorMes,
-        potenciaPlacaW = Soporte.potenciaPlacaW,
-        margen = Soporte.margen,
-        energiaCalculada = Soporte.energiaCalculada
-    )
-
-    val numeroPlacas = calculador.calcularNumeroPlacas()
-    if (numeroPlacas > 0) {
-        radiation = "Se requieren $numeroPlacas placas para cubrir la demanda en el peor mes."
-        error = ""
-    } else {
-        radiation = ""
-        error = "No se pudo calcular el número de placas."
-    }
 }

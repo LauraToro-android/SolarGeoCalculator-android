@@ -1,6 +1,7 @@
 package com.example.placas
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,6 +12,7 @@ import com.example.placas.ui.screen.RegisterScreen
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.placas.data.calculate.Soporte
 import com.example.placas.ui.screen.ForgotPasswordScreen
 import com.example.placas.ui.screen.SettingsScreen
 

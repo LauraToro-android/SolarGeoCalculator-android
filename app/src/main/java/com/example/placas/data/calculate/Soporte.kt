@@ -1,15 +1,38 @@
 package com.example.placas.data.calculate
 
+import android.Manifest
 import android.util.Log
 import com.example.placas.services.LocationIQService
 import com.example.placas.services.OpenStreetMapService
 import com.example.placas.services.RadiationService
 import android.annotation.SuppressLint
 import android.content.Context
+import android.location.Location
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.example.placas.services.OpenStreetMapService.obtenerUbicacion
+import com.example.placas.ui.screen.OpenStreetMapView
+import com.example.placas.ui.screen.OpenStreetMapViewWithUbication
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 object Soporte {
 
-    // Variables estáticas privadas
+    // Variables privadas para almacenar información de ubicación y parámetros de cálculo
     private var _latitud: Double? = null
     private var _longitud: Double? = null
     private var _anguloInclinacion: Int = 25
@@ -61,31 +84,10 @@ object Soporte {
             _energiaCalculada = value
         }
 
-    /**
-     * Intenta obtener la ubicación actual si no se ha establecido aún.
-     * Utiliza OpenStreetMapService y LocationIQService para obtener lat/lon.
-     */
-    @SuppressLint("MissingPermission")
-    fun obtenerUbicacionSiEsNecesario(context: Context, onCompletado: () -> Unit) {
-        if (_latitud == null || _longitud == null) {
-            OpenStreetMapService.obtenerUbicacion(context) { location ->
-                val lat = location.latitude.toString()
-                val lon = location.longitude.toString()
-
-                LocationIQService.reverseGeocode(lat, lon) { _ ->
-                    _latitud = location.latitude
-                    _longitud = location.longitude
-                    onCompletado()
-                }
-            }
-        } else {
-            onCompletado()
-        }
-    }
 
     /**
-     * Calcula el peor mes de radiación si no está definido ya.
-     * Utiliza la latitud, longitud y ángulo actuales.
+     * Método auxiliar para calcular el peor mes si aún no se ha hecho.
+     * Se puede invocar desde otros componentes que necesiten asegurarse del cálculo.
      */
     suspend fun calcularMesSiEsNecesario(): Int? {
         return if (_mes == null && _latitud != null && _longitud != null) {
@@ -105,4 +107,54 @@ object Soporte {
             _mes
         }
     }
+
+    @OptIn(ExperimentalPermissionsApi::class)  // Habilitar la API experimental
+    @Composable
+    fun SolicitarUbicacion()
+    {
+        val permisoUbicacion = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+        val context = LocalContext.current
+        var location by remember { mutableStateOf<Location?>(null) }
+
+        // Lanzamos la solicitud de permiso al iniciar
+        LaunchedEffect(Unit)
+        {
+            permisoUbicacion.launchPermissionRequest()
+        }
+
+        when
+        {
+            permisoUbicacion.status.isGranted ->
+            {
+                // Obtenemos ubicación solo si hay permiso
+                LaunchedEffect(Unit)
+                {
+                    obtenerUbicacion(context)
+                    {
+                        location = it
+                        Soporte.latitud=it.latitude
+                        Soporte.longitud=it.longitude
+                    }
+                }
+
+                location?.let {
+                    OpenStreetMapViewWithUbication(it.latitude, it.longitude)
+                } ?: OpenStreetMapView()
+            }
+
+            permisoUbicacion.status.shouldShowRationale ->
+            {
+                Text(modifier = Modifier.padding(16.dp), text = "Se necesita permiso de ubicación para centrar el mapa en tu posición.")
+                OpenStreetMapView() // Mapa sin ubicación
+            }
+
+            else ->
+            {
+                Text(modifier = Modifier.padding(16.dp), text = "Permiso no concedido.")
+                OpenStreetMapView() // Se muestra el mapa sin ubicación aquí
+            }
+        }
+
+    }
+
 }
