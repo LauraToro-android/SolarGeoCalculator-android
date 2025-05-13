@@ -40,7 +40,8 @@ import kotlinx.coroutines.launch
 import com.example.placas.data.calculate.Soporte
 
 import com.example.placas.data.calculate.CalculoNPlacas
-import com.example.placas.data.calculate.Soporte.calcularMesSiEsNecesario
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen()
@@ -91,24 +92,47 @@ fun Geocode()
             val isReady = remember { mutableStateOf(false) }
             Button(
                 onClick = {
+                    /////RUSO modifico para incorporar la logica de comprobacion
 
+                    if(text.isNotEmpty()){
+                        // Llama a la API solo al pulsar el botón
+                        LocationIQService.geocode(text) { lat, lon, name ->
+                            Soporte.latitud = lat.toDouble()
+                            Soporte.longitud=lon.toDouble()
 
-                    // Llama a la API solo al pulsar el botón
-                    LocationIQService.geocode(text) { lat, lon, name ->
-                        result = "Lat: $lat, Lon: $lon\nLugar: $name"
-
-                        coroutineScope.launch {
-                            val resultado = RadiationService.fetchRadiation(lat.toString(), lon.toString())
-                            if (resultado.isSuccess) {
-                                radiation = resultado.getOrNull().orEmpty()
-                                error = ""
-                            } else {
-                                error = resultado.exceptionOrNull()?.message.orEmpty()
-                                radiation = ""
-                            }
                         }
                     }
 
+                    //////RUSO obtener el peor mes
+                    coroutineScope.launch {
+                        val lat = Soporte.latitud
+                        val lon = Soporte.longitud
+                        val angle = Soporte.anguloInclinacion
+
+                        val result = RadiationService.fetchWorstMonthResult(lat.toString(), lon.toString(), angle.toString())
+
+                        result.onSuccess { mesStr ->
+                            Soporte.mes = mesStr.toInt()
+
+                        }.onFailure { e ->
+                            Soporte.mes = 12
+                        }
+                    }
+
+
+                    /////RUSO calculo numero placas
+                    val calculo = CalculoNPlacas(
+                        latitud = 41.553645,
+                        longitud = -0.707426,
+                        anguloInclinacion = 25,
+                        mes = 12,
+                        potenciaPlacaW = 550,
+                        margen = 0.8,
+                        energiaCalculada = 6000
+                    )
+                    val nPlacas= calculo.calcularNumeroPlacas()
+
+                    result="NUMERO DE PLACAS NECESARIO ES : $nPlacas"
 
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -123,13 +147,13 @@ fun Geocode()
             Spacer(modifier = Modifier.height(16.dp))
             Text(result)
             Spacer(modifier = Modifier.height(8.dp))
-            if (radiation.isNotEmpty()) {
+      /*      if (radiation.isNotEmpty()) {
                 Text("Radiación anual: $radiation")
             }
 
             if (error.isNotEmpty()) {
                 Text("Error: $error", color = MaterialTheme.colorScheme.error)
-            }
+            }*/
         }
 
     }
@@ -340,6 +364,9 @@ fun SolicitarPermisoUbicacion()
                 obtenerUbicacion(context)
                 {
                     location = it
+                    ///RUSO obtener ubicacion para almacenar en Soporte
+                    Soporte.latitud=it.latitude
+                    Soporte.longitud=it.longitude
                 }
             }
 
