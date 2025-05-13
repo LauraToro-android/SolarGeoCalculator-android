@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import com.example.placas.data.calculate.Soporte
 
 import com.example.placas.data.calculate.CalculoNPlacas
+import kotlinx.coroutines.delay
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
@@ -88,7 +89,7 @@ fun Geocode()
             Spacer(modifier = Modifier.height(16.dp))
 
 
-
+//////////////////RUSO AQUI LA LOGICA DEL BOTON DEL CALCULO DE NUMERO DE PLACAS//////////////////////////////////
             val isReady = remember { mutableStateOf(false) }
             Button(
                 onClick = {
@@ -119,20 +120,30 @@ fun Geocode()
                         }
                     }
 
+                    /////RUSO meto un dilay para dedos rapidos
+                    coroutineScope.launch {
+                             delay(2000) // espera 2 segundos (2000 ms)
+
+                    }
 
                     /////RUSO calculo numero placas
-                    val calculo = CalculoNPlacas(
-                        latitud = 41.553645,
-                        longitud = -0.707426,
-                        anguloInclinacion = 25,
-                        mes = 12,
-                        potenciaPlacaW = 550,
-                        margen = 0.8,
-                        energiaCalculada = 6000
-                    )
-                    val nPlacas= calculo.calcularNumeroPlacas()
+                    coroutineScope.launch {
+                        val calculo = CalculoNPlacas(
+                            latitud = Soporte.latitud ?: 0.0,
+                            longitud = Soporte.longitud ?: 0.0,
+                            anguloInclinacion = Soporte.anguloInclinacion,
+                            mes = Soporte.mes ?: 12,
+                            potenciaPlacaW = Soporte.potenciaPlacaW,
+                            margen = Soporte.margen,
+                            energiaCalculada = Soporte.energiaCalculada
+                        )
 
-                    result="NUMERO DE PLACAS NECESARIO ES : $nPlacas"
+                        val nPlacas = calculo.calcularNumeroPlacas()
+
+                        result = "NUMERO DE PLACAS NECESARIO ES : $nPlacas"
+
+
+                    }
 
                 },
                 colors = ButtonDefaults.buttonColors(
