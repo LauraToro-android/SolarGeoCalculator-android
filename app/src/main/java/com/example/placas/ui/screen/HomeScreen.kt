@@ -51,6 +51,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.layout.ContentScale
 import com.example.placas.data.calculate.CalculoNPlacas
 import com.example.placas.data.calculate.Soporte
 import kotlinx.coroutines.launch
@@ -90,9 +91,6 @@ fun Content(
 
 }
 
-
-const val motto: String = "Formación y Empleo"
-
 @Composable
 fun getCompanyName(): String {
     return stringResource(id = R.string.name_company)
@@ -112,20 +110,22 @@ fun ShowTitle()
         fontWeight = FontWeight.Bold,
     )
     }
-
-    Text(
-        text = motto
-    )
 }
 
 @Composable
 fun ShowBanner() {
     Box(
-        modifier = Modifier.padding(bottom = 10.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp)
+
     ) {
         Image(
-            painterResource(R.drawable.portada),
-            "banner")
+            painter = painterResource(R.drawable.portada),
+            contentDescription = "Banner",
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 
@@ -133,10 +133,11 @@ fun ShowBanner() {
 fun NestedScrolling() {
 
     LazyColumn (
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp)
     ){
         item{
+            Spacer(modifier = Modifier.height(40.dp))
             ShowTitle(
             )
         }
@@ -149,9 +150,7 @@ fun NestedScrolling() {
         item {
             MainScreen()
         }
-        item {
-            MethodsScreen()
-        }
+
         /*item {
             RadiationCalculatorScreen()
         }*/
@@ -263,7 +262,7 @@ fun EnergyUsageScreen() {
             },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF163D6D),
+                containerColor = Color(0xE1128D93),
                 contentColor = Color.White
             )
         ) {
@@ -318,62 +317,70 @@ fun EnergyUsageScreen() {
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Cálculo de placas solares", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF163D6D))
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
-     ///parametros modificados para introducir a mano
-        TextField(
-            value = angulo,
-            onValueChange = {
-             angulo = it
-             val valorInt = it.toIntOrNull()
-             if (valorInt != null) {
-                  Soporte.anguloInclinacion = valorInt
-              }
-                Log.i("Test Angulo", "ANGULO: ${Soporte.anguloInclinacion}")
-          },
-             label = { Text("Ángulo de inclinación") }
-        )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(8.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Cálculo de placas solares", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFF163D6D))
+                Spacer(modifier = Modifier.height(16.dp))
 
-        TextField(
-         value = potenciaPlacaW,
-         onValueChange = {
-                potenciaPlacaW = it
+                ///parametros modificados para introducir a mano
+                TextField(
+                    value = angulo,
+                    onValueChange = {
+                        angulo = it
+                        val valorInt = it.toIntOrNull()
+                        if (valorInt != null) {
+                            Soporte.anguloInclinacion = valorInt
+                        }
+                        Log.i("Test Angulo", "ANGULO: ${Soporte.anguloInclinacion}")
+                    },
+                    label = { Text("Ángulo de inclinación") }
+                )
 
-              val valorInt = it.toIntOrNull()
-              if (valorInt != null) {
-                 Soporte.potenciaPlacaW = valorInt
-             }
-             Log.i("Test Potencia", "POTENCIA: ${Soporte.potenciaPlacaW}")
-          },
-          label = { Text("Potencia de placa (W)") }
-        )
+                TextField(
+                    value = potenciaPlacaW,
+                    onValueChange = {
+                        potenciaPlacaW = it
 
+                        val valorInt = it.toIntOrNull()
+                        if (valorInt != null) {
+                            Soporte.potenciaPlacaW = valorInt
+                        }
+                        Log.i("Test Potencia", "POTENCIA: ${Soporte.potenciaPlacaW}")
+                    },
+                    label = { Text("Potencia de placa (W)") }
+                )
 
-        //TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
+                //TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
 
-        TextField(
-         value = margen,
-            onValueChange = {
-              margen = it
+                TextField(
+                    value = margen,
+                    onValueChange = {
+                        margen = it
 
-               val valorDouble = it.toDoubleOrNull()
-               if (valorDouble != null && valorDouble in 0.0..1.0) {
-                   Soporte.margen = valorDouble
-                }
-                Log.i("Test Potencia", "POTENCIA: ${Soporte.margen}")
-         },
-          label = { Text("Margen (0-1)") }
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+                        val valorDouble = it.toDoubleOrNull()
+                        if (valorDouble != null && valorDouble in 0.0..1.0) {
+                            Soporte.margen = valorDouble
+                        }
+                        Log.i("Test Potencia", "POTENCIA: ${Soporte.margen}")
+                    },
+                    label = { Text("Margen (0-1)") }
+                )
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Geocode() // Add location
+            }
+
+        }
     }
 }
 
-
-
-@Preview(showSystemUi = true)
 @Composable
 fun ShowMyFirstColumn() {
     NestedScrolling()
