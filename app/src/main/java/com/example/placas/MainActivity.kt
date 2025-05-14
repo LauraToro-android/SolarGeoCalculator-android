@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.placas.data.calculate.Soporte
 import com.example.placas.ui.screen.ForgotPasswordScreen
+import com.example.placas.ui.screen.SettingsScreen
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -40,6 +41,7 @@ class MainActivity : ComponentActivity() {
                 composable("home") { HomeScreen(navController) }
                 composable("register") { RegisterScreen(auth,navController) }
                 composable("forgot_password") { ForgotPasswordScreen(navController)  }
+                composable( "Settings") { SettingsScreen(navController) }
 
 
             }

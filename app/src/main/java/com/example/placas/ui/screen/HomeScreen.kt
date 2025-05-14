@@ -51,6 +51,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import com.example.placas.data.calculate.CalculoNPlacas
 import com.example.placas.data.calculate.Soporte
@@ -203,8 +204,18 @@ fun EnergyUsageScreen() {
     Column(modifier = Modifier.padding(16.dp)) {
 
         // Selección de dispositivos
-        Text("Selecciona un electrodoméstico:", fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
+        Row( modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically)
+        {
+            Text("Selecciona un electrodoméstico:",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+        }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(imageList) { (imageResId, deviceName) ->
                 val isSelected = selectedDevice == deviceName
@@ -299,6 +310,9 @@ fun EnergyUsageScreen() {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        Text("Tipo de conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        SwitchConection(modifier = Modifier)
 
         val grouped = hourDeviceList.groupBy { it.second }
         val maxEntry = grouped.maxByOrNull { entry ->
@@ -387,4 +401,32 @@ fun EnergyUsageScreen() {
 @Composable
 fun ShowMyFirstColumn() {
     NestedScrolling()
+}
+@Composable
+fun SwitchConection(modifier: Modifier = Modifier){
+    var isChecked by remember { mutableStateOf(true) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+
+    ){
+      Text(
+          text = if (isChecked) "Aislado" else "Mixto",
+      )
+    }
+
+    Switch(
+        checked = isChecked,
+        onCheckedChange = { isChecked = it },
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = Color.Black,
+            uncheckedThumbColor = Color.Black,
+            checkedTrackColor = Color(0xE1128D93),
+            uncheckedTrackColor = Color.LightGray),
+        modifier = Modifier
+            .scale(0.7f)
+
+    )
 }
