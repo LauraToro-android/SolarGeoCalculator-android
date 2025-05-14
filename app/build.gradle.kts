@@ -92,6 +92,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
 
+    implementation ("androidx.compose.ui:ui-viewbinding:<version>")
+
+
     //Dependencias Firebase
     implementation(platform(libs.firebase.boom))
     implementation(libs.firebase.crash)
