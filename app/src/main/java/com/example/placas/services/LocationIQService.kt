@@ -6,17 +6,30 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.*
 
 /** MODELOS **/
+/**
+ * Modelo para la respuesta de búsqueda directa (geocodificación).
+ * Representa una ubicación con latitud, longitud y nombre completo.
+ */
 data class LocationIQResponseItem(
     val lat: String,
     val lon: String,
     val display_name: String
 )
 
+
+/**
+ * Modelo para la respuesta de búsqueda inversa (reverse geocoding).
+ * Contiene el nombre completo de la dirección y un objeto `Address` más detallado.
+ */
 data class ReverseGeocodeResponse(
     val display_name: String,
     val address: Address?
 )
 
+
+/**
+ * Dirección detallada extraída de una búsqueda inversa.
+ */
 data class Address(
     val road: String?,
     val suburb: String?,
@@ -27,7 +40,19 @@ data class Address(
 )
 
 /** INTERFAZ DE RETROFIT **/
+
+/**
+ * Interfaz para consumir la API de LocationIQ usando Retrofit.
+ * Proporciona funciones para geocodificación directa e inversa.
+ */
 interface LocationIQApi {
+        /**
+     * Geocodifica una dirección (texto) y devuelve una lista de posibles coincidencias.
+     *
+     * @param apiKey Tu clave de API.
+     * @param address Dirección a buscar.
+     * @param format Formato de la respuesta (por defecto "json").
+     */
     @GET("v1/search.php")
     fun geocodeAddress(
         @Query("key") apiKey: String,
@@ -35,6 +60,14 @@ interface LocationIQApi {
         @Query("format") format: String = "json"
     ): Call<List<LocationIQResponseItem>>
 
+        /**
+     * Realiza una búsqueda inversa: convierte lat/lon en una dirección legible.
+     *
+     * @param apiKey Tu clave de API.
+     * @param lat Latitud.
+     * @param lon Longitud.
+     * @param format Formato de la respuesta (por defecto "json").
+     */
     @GET("v1/reverse.php")
     fun reverseGeocode(
         @Query("key") apiKey: String,
@@ -45,6 +78,11 @@ interface LocationIQApi {
 }
 
 /** SERVICIO HELPER **/
+
+
+/**
+ * Objeto singleton que encapsula la lógica para interactuar con la API de LocationIQ.
+ */
 object LocationIQService {
     private const val BASE_URL = "https://us1.locationiq.com/"
     private const val API_KEY = "pk.2025b4f7e4e9f81b4300afc4ae0eae0d"
@@ -52,6 +90,7 @@ object LocationIQService {
     private val api: LocationIQApi
 
     init {
+                // Inicializa Retrofit con el endpoint base y el convertidor JSON (Gson).
         val retrofit = Retrofit.Builder()
             .baseUrl(BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
@@ -60,6 +99,12 @@ object LocationIQService {
         api = retrofit.create(LocationIQApi::class.java)
     }
 
+        /**
+     * Realiza una geocodificación directa (de dirección a coordenadas).
+     *
+     * @param address Dirección que el usuario introduce.
+     * @param onResult Callback que recibe latitud, longitud y nombre completo si hay resultado.
+     */
     fun geocode(address: String, onResult: (lat: String, lon: String, name: String) -> Unit) {
         api.geocodeAddress(API_KEY, address).enqueue(object : Callback<List<LocationIQResponseItem>> {
             override fun onResponse(
@@ -82,6 +127,14 @@ object LocationIQService {
         })
     }
 
+
+    /**
+     * Realiza una geocodificación inversa (de coordenadas a dirección).
+     *
+     * @param lat Latitud de la ubicación.
+     * @param lon Longitud de la ubicación.
+     * @param onResult Callback que recibe la dirección legible como String.
+     */
     fun reverseGeocode(lat: String, lon: String, onResult: (address: String) -> Unit) {
         api.reverseGeocode(API_KEY, lat, lon).enqueue(object : Callback<ReverseGeocodeResponse> {
             override fun onResponse(
@@ -104,6 +157,13 @@ object LocationIQService {
 
     /** FUNCIONES VERIFICACIÓN **/
 
+        /**
+     * Verifica si las coordenadas están dentro de los rangos válidos para latitud y longitud.
+     *
+     * @param latitud Latitud en grados (-90 a 90).
+     * @param longitud Longitud en grados (-180 a 180).
+     * @return true si ambas coordenadas son válidas.
+     */
     fun coordenadasValidas(latitud: Double, longitud: Double): Boolean {
         val latitudValida = latitud in -90.0..90.0
         val longitudValida = longitud in -180.0..180.0
