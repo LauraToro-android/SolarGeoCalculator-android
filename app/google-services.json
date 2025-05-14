@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "458964948554",
+    "project_id": "fir-a3a86",
+    "storage_bucket": "fir-a3a86.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:458964948554:android:0007510e7442ab2079b8b3",
+        "android_client_info": {
+          "package_name": "com.example.placas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCX8pvQeWUDgmGxb7XsQC9jet9Sz21kvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:458964948554:android:396335a61d3cefce79b8b3",
+        "android_client_info": {
+          "package_name": "com.ltoro.bbddfirebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCX8pvQeWUDgmGxb7XsQC9jet9Sz21kvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
