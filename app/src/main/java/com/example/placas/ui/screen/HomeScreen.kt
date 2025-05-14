@@ -309,6 +309,9 @@ fun EnergyUsageScreen() {
 
         maxEntry?.let { (range, items) ->
             val total = items.sumOf { (name, _, count) -> (powerConsumption[name] ?: 0) * count }
+
+            Soporte.energiaCalculada = total
+
             Text(
                 text = "Mayor consumo en: ${range.first}:00-${range.second}:00 con $total W",
                 style = MaterialTheme.typography.bodyLarge,
