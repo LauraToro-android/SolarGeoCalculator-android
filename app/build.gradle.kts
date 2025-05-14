@@ -93,7 +93,6 @@ dependencies {
 
 
     implementation ("androidx.compose.ui:ui-viewbinding:<version>")
-}
 
 
     //Dependencias Firebase
