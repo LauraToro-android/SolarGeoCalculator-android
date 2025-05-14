@@ -308,12 +308,6 @@ fun EnergyUsageScreen() {
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Tipo de conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        SwitchConection(modifier = Modifier)
-
         val grouped = hourDeviceList.groupBy { it.second }
         val maxEntry = grouped.maxByOrNull { entry ->
             entry.value.sumOf { (name, _, count) ->
@@ -333,6 +327,11 @@ fun EnergyUsageScreen() {
                 color = Color(0xFF163D6D)
             )
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("Tipo de conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        SwitchConection(modifier = Modifier)
 
         Spacer(modifier = Modifier.height(30.dp))
 
