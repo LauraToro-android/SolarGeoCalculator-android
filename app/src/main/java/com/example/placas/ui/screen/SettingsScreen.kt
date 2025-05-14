@@ -35,7 +35,7 @@ fun SettingsScreen(navController: NavController) {
         },
             modifier = Modifier.padding(16.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF96133D),
+                containerColor = Color(0xE1128D93),
                 contentColor = Color.White
             )
         ){
