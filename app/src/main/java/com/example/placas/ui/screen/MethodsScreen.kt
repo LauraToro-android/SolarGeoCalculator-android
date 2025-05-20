@@ -44,7 +44,7 @@ fun WorstMonth()
     var angle by remember { mutableStateOf("") }
     var result by remember { mutableStateOf("") }
 
-
+/*
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -128,5 +128,5 @@ fun WorstMonth()
                 }
             }
         }
-    }
+    }*/
 }

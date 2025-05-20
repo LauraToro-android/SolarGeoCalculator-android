@@ -1,5 +1,6 @@
 package com.example.placas.ui.screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -53,7 +54,9 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.layout.ContentScale
 import com.example.placas.data.calculate.CalculoNPlacas
+import com.example.placas.data.calculate.Soporte
 import kotlinx.coroutines.launch
 
 @Composable
@@ -91,9 +94,6 @@ fun Content(
 
 }
 
-
-const val motto: String = "Formación y Empleo"
-
 @Composable
 fun getCompanyName(): String {
     return stringResource(id = R.string.name_company)
@@ -113,20 +113,22 @@ fun ShowTitle()
         fontWeight = FontWeight.Bold,
     )
     }
-
-    Text(
-        text = motto
-    )
 }
 
 @Composable
 fun ShowBanner() {
     Box(
-        modifier = Modifier.padding(bottom = 10.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp)
+
     ) {
         Image(
-            painterResource(R.drawable.portada),
-            "banner")
+            painter = painterResource(R.drawable.portada),
+            contentDescription = "Banner",
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 
@@ -134,10 +136,11 @@ fun ShowBanner() {
 fun NestedScrolling() {
 
     LazyColumn (
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp)
     ){
         item{
+            Spacer(modifier = Modifier.height(40.dp))
             ShowTitle(
             )
         }
@@ -152,9 +155,7 @@ fun NestedScrolling() {
         item {
             MainScreen()
         }
-        item {
-            MethodsScreen()
-        }
+
         /*item {
             RadiationCalculatorScreen()
         }*/
@@ -267,7 +268,7 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
             },
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF163D6D),
+                containerColor = Color(0xE1128D93),
                 contentColor = Color.White
             )
         ) {
@@ -316,6 +317,9 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
 
         maxEntry?.let { (range, items) ->
             val total = items.sumOf { (name, _, count) -> (powerConsumption[name] ?: 0) * count }
+
+            Soporte.energiaCalculada = total
+
             Text(
                 text = "Mayor consumo en: ${range.first}:00-${range.second}:00 con $total W",
                 style = MaterialTheme.typography.bodyLarge,
@@ -351,50 +355,70 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
         TextField(value = potenciaPlacaW, onValueChange = { potenciaPlacaW = it }, label = { Text("Potencia de placa (W)") })
         TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
-        Button(
-            onClick = {
-                val lat = latitud.toDoubleOrNull()
-                val lon = longitud.toDoubleOrNull()
-                val angle = angulo.toIntOrNull()
-                val month = mes.toIntOrNull()
-                val potencia = potenciaPlacaW.toIntOrNull()
-                val margenValor = margen.toDoubleOrNull()
-
-                if (lat != null && lon != null && angle != null && month != null && potencia != null && margenValor != null) {
-                    coroutineScope.launch {
-                        val calculo = CalculoNPlacas(
-                            latitud = lat,
-                            longitud = lon,
-                            anguloInclinacion = angle,
-                            mes = month,
-                            potenciaPlacaW = potencia,
-                            margen = margenValor
-                        )
-                        numeroPlacas = calculo.calcularNumeroPlacas()
-                    }
-                } else {
-                    Toast.makeText(context, "Por favor, rellena todos los campos correctamente", Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF163D6D), contentColor = Color.White)
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(8.dp)
         ) {
-            Text("Calcular número de placas")
-        }
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Cálculo de placas solares", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFF163D6D))
+                Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+                ///parametros modificados para introducir a mano
+                TextField(
+                    value = angulo,
+                    onValueChange = {
+                        angulo = it
+                        val valorInt = it.toIntOrNull()
+                        if (valorInt != null) {
+                            Soporte.anguloInclinacion = valorInt
+                        }
+                        Log.i("Test Angulo", "ANGULO: ${Soporte.anguloInclinacion}")
+                    },
+                    label = { Text("Ángulo de inclinación") }
+                )
 
-        numeroPlacas?.let {
-            Text("Número de placas: $it", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                TextField(
+                    value = potenciaPlacaW,
+                    onValueChange = {
+                        potenciaPlacaW = it
+
+                        val valorInt = it.toIntOrNull()
+                        if (valorInt != null) {
+                            Soporte.potenciaPlacaW = valorInt
+                        }
+                        Log.i("Test Potencia", "POTENCIA: ${Soporte.potenciaPlacaW}")
+                    },
+                    label = { Text("Potencia de placa (W)") }
+                )
+
+                //TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
+
+                TextField(
+                    value = margen,
+                    onValueChange = {
+                        margen = it
+
+                        val valorDouble = it.toDoubleOrNull()
+                        if (valorDouble != null && valorDouble in 0.0..1.0) {
+                            Soporte.margen = valorDouble
+                        }
+                        Log.i("Test Potencia", "POTENCIA: ${Soporte.margen}")
+                    },
+                    label = { Text("Margen (0-1)") }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Geocode() // Add location
+            }
+
         }
     }
 }
 
-
-
-@Preview(showSystemUi = true)
 @Composable
 fun ShowMyFirstColumn() {
     NestedScrolling()

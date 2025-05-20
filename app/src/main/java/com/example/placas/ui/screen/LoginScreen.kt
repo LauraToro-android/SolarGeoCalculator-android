@@ -1,5 +1,6 @@
 package com.example.placas.ui.screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -31,6 +32,11 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
 
     fun handleLogin() {
+        if (username.isBlank() || password.isBlank()) {
+            Toast.makeText(context, "Por favor, rellena todos los campos", Toast.LENGTH_SHORT).show()
+            isError = true
+            return
+        }
         isLoading = true
         auth.signInWithEmailAndPassword(username, password)
             .addOnCompleteListener { task ->
@@ -39,6 +45,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
                     Toast.makeText(context, "Inicio de sesión exitoso", Toast.LENGTH_SHORT).show()
                     navController.navigate("home")
                 } else {
+                    Log.e("Firebase", "Error, datos incorrectos.", task.exception)
                     isError = true
                     Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                 }

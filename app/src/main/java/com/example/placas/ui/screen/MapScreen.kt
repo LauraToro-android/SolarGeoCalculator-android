@@ -2,12 +2,14 @@ package com.example.placas.ui.screen
 
 import android.Manifest
 import android.location.Location
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.placas.services.LocationIQService
@@ -36,16 +39,26 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.launch
+import com.example.placas.data.calculate.Soporte
+
+import com.example.placas.data.calculate.CalculoNPlacas
+import kotlinx.coroutines.delay
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun MainScreen()
 {
-    Column(modifier = Modifier.padding(top = 30.dp))
+    Column(modifier = Modifier.padding(top = 10.dp))
     {
-        Text(modifier = Modifier.padding(16.dp), text = "Mapa: ")
+        Text(
+            modifier = Modifier.padding(16.dp),
+            text = "Ubicación actual",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF163D6D))
         SolicitarPermisoUbicacion()
         Spacer(modifier = Modifier.height(20.dp))
-        Geocode()
         //Spacer(modifier = Modifier.height(20.dp))
         //ReverseGeoCode()
     }
@@ -61,63 +74,99 @@ fun Geocode()
     var radiation by remember { mutableStateOf("") }
     var error by remember { mutableStateOf("") }
 
-    Surface(
-        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-        border = BorderStroke(1.dp, Color.Black),
-        //shape = RoundedCornerShape(8.dp),
-        tonalElevation = 4.dp,
 
-        )
+    Column()
     {
-        Column(modifier = Modifier.padding(20.dp))
-        {
-            Text("Introduce dirección: (Para verificar radiación anual solar)")
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                value = text,
-                onValueChange = { text = it },
-                label = { Text("Dirección") }
-            )
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = text,
+            onValueChange = { text = it },
+            label = { Text("Dirección") }
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = {
-                // Llama a la API solo al pulsar el botón
-                LocationIQService.geocode(text) { lat, lon, name ->
-                    result = "Lat: $lat, Lon: $lon\nLugar: $name"
 
-                    coroutineScope.launch {
-                        val resultado = RadiationService.fetchRadiation(lat.toString(), lon.toString())
-                        if (resultado.isSuccess) {
-                            radiation = resultado.getOrNull().orEmpty()
-                            error = ""
-                        } else {
-                            error = resultado.exceptionOrNull()?.message.orEmpty()
-                            radiation = ""
-                        }
+//////////////////RUSO AQUI LA LOGICA DEL BOTON DEL CALCULO DE NUMERO DE PLACAS//////////////////////////////////
+        val isReady = remember { mutableStateOf(false) }
+        Button(
+            onClick = {
+                /////RUSO modifico para incorporar la logica de comprobacion
+
+                if(text.isNotEmpty()){
+                    // Llama a la API solo al pulsar el botón
+                    LocationIQService.geocode(text) { lat, lon, name ->
+                        Soporte.latitud = lat.toDouble()
+                        Soporte.longitud=lon.toDouble()
+
                     }
                 }
-            }, colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF98133E),
+
+                //////RUSO obtener el peor mes
+                coroutineScope.launch {
+                    val lat = Soporte.latitud
+                    val lon = Soporte.longitud
+                    val angle = Soporte.anguloInclinacion
+
+                    val result = RadiationService.fetchWorstMonthResult(lat.toString(), lon.toString(), angle.toString())
+
+                    result.onSuccess { mesStr ->
+                        Soporte.mes = mesStr.toInt()
+
+                    }.onFailure { e ->
+                        Soporte.mes = 12
+                    }
+                }
+
+                /////RUSO meto un dilay para dedos rapidos
+                coroutineScope.launch {
+                         delay(2000) // espera 2 segundos (2000 ms)
+
+                }
+
+                /////RUSO calculo numero placas
+                coroutineScope.launch {
+                    val calculo = CalculoNPlacas(
+                        latitud = Soporte.latitud ?: 0.0,
+                        longitud = Soporte.longitud ?: 0.0,
+                        anguloInclinacion = Soporte.anguloInclinacion,
+                        mes = Soporte.mes ?: 12,
+                        potenciaPlacaW = Soporte.potenciaPlacaW,
+                        margen = Soporte.margen,
+                        energiaCalculada = Soporte.energiaCalculada
+                    )
+
+                    val nPlacas = calculo.calcularNumeroPlacas()
+
+                    result = "NUMERO DE PLACAS NECESARIO ES : $nPlacas"
+
+
+                }
+
+            },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xE1128D93),
                 contentColor = Color.White
-            )) {
-                Text("Consultar radiación solar")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(result)
-            Spacer(modifier = Modifier.height(8.dp))
-            if (radiation.isNotEmpty()) {
-                Text("Radiación anual: $radiation")
-            }
-
-            if (error.isNotEmpty()) {
-                Text("Error: $error", color = MaterialTheme.colorScheme.error)
-            }
+            )
+        ) {
+            Text("Calcular número de placas")
         }
 
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(result)
+        Spacer(modifier = Modifier.height(8.dp))
+  /*      if (radiation.isNotEmpty()) {
+            Text("Radiación anual: $radiation")
+        }
+
+        if (error.isNotEmpty()) {
+            Text("Error: $error", color = MaterialTheme.colorScheme.error)
+        }*/
     }
+
 }
+
 
 @Composable
 fun ReverseGeoCode()
@@ -127,10 +176,9 @@ fun ReverseGeoCode()
     var result by remember { mutableStateOf("") }
 
     Surface(
-        modifier = Modifier.padding(16.dp).fillMaxWidth(),
-        border = BorderStroke(1.dp, Color.Black),
+
+
         //shape = RoundedCornerShape(8.dp),
-        tonalElevation = 4.dp,
     )
     {
         Column(modifier = Modifier.padding(20.dp))
@@ -152,6 +200,8 @@ fun ReverseGeoCode()
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = {
+
+
 
                 if (LocationIQService.coordenadasValidas(lat.toDouble(), lon.toDouble()))
                 {
@@ -197,10 +247,14 @@ fun OpenStreetMapView()
     }
 
     Surface(
-        modifier = Modifier.padding(16.dp).fillMaxWidth().height(500.dp),
-        border = BorderStroke(1.dp, Color.Black),
-        //shape = RoundedCornerShape(8.dp),
-        tonalElevation = 4.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color.Gray),
+        tonalElevation = 6.dp,
+        shadowElevation = 6.dp,
+        color = MaterialTheme.colorScheme.surfaceVariant
     )
     {
         AndroidView(
@@ -234,10 +288,14 @@ fun OpenStreetMapViewWithUbication(lat: Double, lon: Double)
     }
 
     Surface(
-        modifier = Modifier.padding(16.dp).fillMaxWidth().height(500.dp),
-        border = BorderStroke(1.dp, Color.Black),
-        //shape = RoundedCornerShape(8.dp),
-        tonalElevation = 4.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(500.dp),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color.Gray),
+        tonalElevation = 6.dp,
+        shadowElevation = 6.dp,
+        color = MaterialTheme.colorScheme.surfaceVariant
     )
     {
         AndroidView(
@@ -279,7 +337,7 @@ fun OpenStreetMapViewWithUbication(lat: Double, lon: Double)
                 }
             }
         }, colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF98133E),
+            containerColor = Color(0xE1128D93),
             contentColor = Color.White
         ))
         {
@@ -322,6 +380,9 @@ fun SolicitarPermisoUbicacion()
                 obtenerUbicacion(context)
                 {
                     location = it
+                    ///RUSO obtener ubicacion para almacenar en Soporte
+                    Soporte.latitud=it.latitude
+                    Soporte.longitud=it.longitude
                 }
             }
 
@@ -342,4 +403,5 @@ fun SolicitarPermisoUbicacion()
             OpenStreetMapView() // Se muestra el mapa sin ubicación aquí
         }
     }
+
 }
