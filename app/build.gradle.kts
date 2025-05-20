@@ -101,4 +101,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
+    //Dependencias DataStore (Almacenar datos en dispositivo)
+    implementation ("androidx.datastore:datastore-preferences:1.0.0")
+    implementation ("com.google.code.gson:gson:2.10.1")
 }
+
