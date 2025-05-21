@@ -15,6 +15,14 @@
       </SelectionState>
       <SelectionState runConfigName="PreviewInicioPantalla">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2025-05-15T10:20:23.799498100Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\larac\.android\avd\Pixel_3a_XL.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
     </selectionStates>
   </component>

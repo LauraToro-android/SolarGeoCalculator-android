@@ -36,8 +36,6 @@ val franjasHorarias = listOf(
     "12:00 - 14:00", "14:00 - 16:00", "16:00 - 18:00",
     "18:00 - 20:00", "20:00 - 22:00", "22:00 - 00:00"
 )
-val RosaPalido = Color(0xFFFFC0CB)
-val RosaClaro = Color(0xFFFFE4E1)
 
 @Composable
 fun InicioPantalla() {
@@ -71,6 +69,7 @@ fun InicioPantalla() {
     }
 
     var nuevoItem by rememberSaveable { mutableStateOf("") }
+    var textoBusqueda by rememberSaveable { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -108,10 +107,30 @@ fun InicioPantalla() {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+        TextField(
+            value = textoBusqueda,
+            onValueChange = { textoBusqueda = it },
+            placeholder = { Text("Buscar electrodoméstico...") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            shape = MaterialTheme.shapes.medium,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                cursorColor = Color(0xFF016E6E),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
+        )
+        val itemsFiltrados = items.filter {
+            it.nombre.contains(textoBusqueda, ignoreCase = true)
+        }
+
 
         LazyColumn(modifier = Modifier.weight(1f)) {
-            items(items) { electrodomestico ->
-                ElectrodomesticoCard(
+            items(itemsFiltrados) { electrodomestico ->
+            ElectrodomesticoCard(
                     electrodomestico = electrodomestico,
                     onDelete = {
                         items = items.filter { it != electrodomestico }
