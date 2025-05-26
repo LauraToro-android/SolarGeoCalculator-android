@@ -1,5 +1,6 @@
 package com.example.placas.ui.screen
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,7 +25,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,12 +46,16 @@ import androidx.navigation.NavController
 import com.example.placas.R
 import androidx.compose.foundation.layout.PaddingValues
 import com.example.placas.ui.components.DropDownMenu
-import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.ContentScale
+import com.example.placas.data.calculate.CalculoNPlacas
+import com.example.placas.data.calculate.Soporte
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(navController: NavController){
@@ -89,9 +92,6 @@ fun Content(
 
 }
 
-
-const val motto: String = "Formación y Empleo"
-
 @Composable
 fun getCompanyName(): String {
     return stringResource(id = R.string.name_company)
@@ -111,20 +111,22 @@ fun ShowTitle()
         fontWeight = FontWeight.Bold,
     )
     }
-
-    Text(
-        text = motto
-    )
 }
 
 @Composable
 fun ShowBanner() {
     Box(
-        modifier = Modifier.padding(bottom = 10.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 10.dp)
+
     ) {
         Image(
-            painterResource(R.drawable.portada),
-            "banner")
+            painter = painterResource(R.drawable.portada),
+            contentDescription = "Banner",
+            modifier = Modifier.fillMaxWidth(),
+            contentScale = ContentScale.Crop
+        )
     }
 }
 
@@ -132,10 +134,11 @@ fun ShowBanner() {
 fun NestedScrolling() {
 
     LazyColumn (
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(16.dp)
     ){
         item{
+            Spacer(modifier = Modifier.height(40.dp))
             ShowTitle(
             )
         }
@@ -148,6 +151,7 @@ fun NestedScrolling() {
         item {
             MainScreen()
         }
+
         /*item {
             RadiationCalculatorScreen()
         }*/
@@ -157,7 +161,6 @@ fun NestedScrolling() {
 @Composable
 fun EnergyUsageScreen() {
     val context = LocalContext.current
-
     val imageList = listOf(
         R.drawable.tv2 to "Televisor",
         R.drawable.iron2 to "Plancha",
@@ -188,10 +191,31 @@ fun EnergyUsageScreen() {
 
     val hourDeviceList = remember { mutableStateListOf<Triple<String, Pair<Int, Int>, Int>>() }
 
+    var latitud by remember { mutableStateOf("41.553645") }
+    var longitud by remember { mutableStateOf("-0.707426") }
+    var angulo by remember { mutableStateOf("25") }
+    var mes by remember { mutableStateOf("12") }
+    var potenciaPlacaW by remember { mutableStateOf("500") }
+    var margen by remember { mutableStateOf("0.8") }
+
+    var numeroPlacas by remember { mutableStateOf<Int?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+
     Column(modifier = Modifier.padding(16.dp)) {
 
-        Text("Selecciona un electrodoméstico:", fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
+        // Selección de dispositivos
+        Row( modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically)
+        {
+            Text("Selecciona un electrodoméstico:",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+        }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(imageList) { (imageResId, deviceName) ->
                 val isSelected = selectedDevice == deviceName
@@ -216,6 +240,7 @@ fun EnergyUsageScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Selección de rango horario
         Text("Selecciona la franja horaria:", fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -247,7 +272,10 @@ fun EnergyUsageScreen() {
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF163D6D), contentColor = Color.White)
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xE1128D93),
+                contentColor = Color.White
+            )
         ) {
             Text("Añadir a la tabla")
         }
@@ -255,6 +283,7 @@ fun EnergyUsageScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("Tabla de dispositivos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
         hourDeviceList.forEachIndexed { index, (name, range, count) ->
             val power = powerConsumption[name] ?: 0
             Row(
@@ -279,9 +308,6 @@ fun EnergyUsageScreen() {
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         val grouped = hourDeviceList.groupBy { it.second }
         val maxEntry = grouped.maxByOrNull { entry ->
             entry.value.sumOf { (name, _, count) ->
@@ -291,6 +317,9 @@ fun EnergyUsageScreen() {
 
         maxEntry?.let { (range, items) ->
             val total = items.sumOf { (name, _, count) -> (powerConsumption[name] ?: 0) * count }
+
+            Soporte.energiaCalculada = total
+
             Text(
                 text = "Mayor consumo en: ${range.first}:00-${range.second}:00 con $total W",
                 style = MaterialTheme.typography.bodyLarge,
@@ -298,10 +327,105 @@ fun EnergyUsageScreen() {
                 color = Color(0xFF163D6D)
             )
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("Tipo de conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        SwitchConection(modifier = Modifier)
+
+        Spacer(modifier = Modifier.height(30.dp))
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(8.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Cálculo de placas solares", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Color(0xFF163D6D))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ///parametros modificados para introducir a mano
+                TextField(
+                    value = angulo,
+                    onValueChange = {
+                        angulo = it
+                        val valorInt = it.toIntOrNull()
+                        if (valorInt != null) {
+                            Soporte.anguloInclinacion = valorInt
+                        }
+                        Log.i("Test Angulo", "ANGULO: ${Soporte.anguloInclinacion}")
+                    },
+                    label = { Text("Ángulo de inclinación") }
+                )
+
+                TextField(
+                    value = potenciaPlacaW,
+                    onValueChange = {
+                        potenciaPlacaW = it
+
+                        val valorInt = it.toIntOrNull()
+                        if (valorInt != null) {
+                            Soporte.potenciaPlacaW = valorInt
+                        }
+                        Log.i("Test Potencia", "POTENCIA: ${Soporte.potenciaPlacaW}")
+                    },
+                    label = { Text("Potencia de placa (W)") }
+                )
+
+                //TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
+
+                TextField(
+                    value = margen,
+                    onValueChange = {
+                        margen = it
+
+                        val valorDouble = it.toDoubleOrNull()
+                        if (valorDouble != null && valorDouble in 0.0..1.0) {
+                            Soporte.margen = valorDouble
+                        }
+                        Log.i("Test Potencia", "POTENCIA: ${Soporte.margen}")
+                    },
+                    label = { Text("Margen (0-1)") }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Geocode() // Add location
+            }
+
+        }
     }
 }
-@Preview(showSystemUi = true)
+
 @Composable
 fun ShowMyFirstColumn() {
     NestedScrolling()
+}
+@Composable
+fun SwitchConection(modifier: Modifier = Modifier){
+    var isChecked by remember { mutableStateOf(true) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+
+    ){
+      Text(
+          text = if (isChecked) "Aislado" else "Mixto",
+      )
+    }
+
+    Switch(
+        checked = isChecked,
+        onCheckedChange = { isChecked = it },
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = Color.Black,
+            uncheckedThumbColor = Color.Black,
+            checkedTrackColor = Color(0xE1128D93),
+            uncheckedTrackColor = Color.LightGray),
+        modifier = Modifier
+            .scale(0.7f)
+
+    )
 }

@@ -13,6 +13,7 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
+
       <SelectionState runConfigName="PreviewInicioPantalla">
         <option name="selectionMode" value="DROPDOWN" />
         <DropdownSelection timestamp="2025-05-15T10:20:23.799498100Z">
