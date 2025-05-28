@@ -40,8 +40,10 @@ class MainActivity : ComponentActivity() {
                 composable("login") { LoginScreen(auth,navController) }
                 composable("home") { HomeScreen(navController) }
                 composable("register") { RegisterScreen(auth,navController) }
+
                 composable("forgot_password") { ForgotPasswordScreen(navController)  }
                 composable( "Settings") { SettingsScreen(navController) }
+
 
 
             }

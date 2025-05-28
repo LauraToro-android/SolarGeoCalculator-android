@@ -52,7 +52,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+ Front
 import androidx.compose.ui.draw.scale
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.net.toUri
 import com.example.placas.data.calculate.CalculoNPlacas
@@ -148,7 +153,9 @@ fun NestedScrolling() {
             ShowBanner()
         }
         item {
-            EnergyUsageScreen()
+            val energyViewModel: EnergyViewModel = viewModel()
+            val navController: NavController = rememberNavController()
+            EnergyUsageScreen(viewModel = energyViewModel, navController = navController)
         }
         item {
             MainScreen()
@@ -160,7 +167,7 @@ fun NestedScrolling() {
 }
 
 @Composable
-fun EnergyUsageScreen() {
+fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) {
     val context = LocalContext.current
     val imageList = listOf(
         R.drawable.tv2 to "Televisor",
@@ -265,10 +272,11 @@ fun EnergyUsageScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Botón para añadir a la tabla actual (RAM)
         Button(
             onClick = {
                 if (selectedDevice != null && selectedRange != null) {
-                    hourDeviceList.add(Triple(selectedDevice!!, selectedRange!!, 1))
+                    viewModel.addDevice(Triple(selectedDevice!!, selectedRange!!, 1))
                     Toast.makeText(context, "Añadido correctamente", Toast.LENGTH_SHORT).show()
                 }
             },
@@ -283,9 +291,10 @@ fun EnergyUsageScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Mostrar tabla actual
         Text("Tabla de dispositivos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-        hourDeviceList.forEachIndexed { index, (name, range, count) ->
+        viewModel.hourDeviceList.forEachIndexed { index, (name, range, count) ->
             val power = powerConsumption[name] ?: 0
             Row(
                 modifier = Modifier
@@ -300,7 +309,7 @@ fun EnergyUsageScreen() {
                 }
                 Text("x$count")
                 Text("${power * count} W")
-                IconButton(onClick = { hourDeviceList.removeAt(index) }) {
+                IconButton(onClick = { viewModel.hourDeviceList.removeAt(index) }) {
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Eliminar",
@@ -315,7 +324,8 @@ fun EnergyUsageScreen() {
         Spacer(modifier = Modifier.height(16.dp))
         SwitchConection(modifier = Modifier)
 
-        val grouped = hourDeviceList.groupBy { it.second }
+        // Cálculo del mayor consumo
+        val grouped = viewModel.hourDeviceList.groupBy { it.second }
         val maxEntry = grouped.maxByOrNull { entry ->
             entry.value.sumOf { (name, _, count) ->
                 (powerConsumption[name] ?: 0) * count
@@ -334,6 +344,33 @@ fun EnergyUsageScreen() {
                 color = Color(0xFF163D6D)
             )
         }
+
+        Row (horizontalArrangement = Arrangement.spacedBy(8.dp), // espacio entre botones
+            modifier = Modifier.fillMaxWidth())
+        {
+
+            Button(onClick = {
+                viewModel.clearTable()
+            },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF163D6D), contentColor = Color.White))
+            {
+                Text("Limpiar")
+            }
+        }
+
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Cálculo de placas solares", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF163D6D))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // TextFields para parámetros
+        TextField(value = latitud, onValueChange = { latitud = it }, label = { Text("Latitud") })
+        TextField(value = longitud, onValueChange = { longitud = it }, label = { Text("Longitud") })
+        TextField(value = angulo, onValueChange = { angulo = it }, label = { Text("Ángulo de inclinación") })
+        TextField(value = mes, onValueChange = { mes = it }, label = { Text("Mes (1-12)") })
+        TextField(value = potenciaPlacaW, onValueChange = { potenciaPlacaW = it }, label = { Text("Potencia de placa (W)") })
+        TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
 
         Spacer(modifier = Modifier.height(30.dp))
 
@@ -403,6 +440,7 @@ fun EnergyUsageScreen() {
 fun ShowMyFirstColumn() {
     NestedScrolling()
 }
+
 @Composable
 fun SwitchConection(modifier: Modifier = Modifier){
     var isChecked by remember { mutableStateOf(true) }
@@ -458,5 +496,25 @@ fun Feedback() {
         )
     ) {
         Text("Formulario")
+    }
+}
+
+
+class EnergyViewModel : ViewModel() {
+    var hourDeviceList = mutableStateListOf<Triple<String, Pair<Int, Int>, Int>>()
+        private set
+
+    fun addDevice(device: Triple<String, Pair<Int, Int>, Int>) {
+        hourDeviceList.add(device)
+    }
+
+    fun removeDevice(index: Int) {
+        if (index in hourDeviceList.indices) {
+            hourDeviceList.removeAt(index)
+        }
+    }
+
+    fun clearTable() {
+        hourDeviceList.clear()
     }
 }
