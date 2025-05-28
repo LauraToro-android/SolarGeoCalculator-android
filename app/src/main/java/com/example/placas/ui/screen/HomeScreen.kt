@@ -1,5 +1,6 @@
 package com.example.placas.ui.screen
 
+import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -53,6 +54,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
+import androidx.core.net.toUri
 import com.example.placas.data.calculate.CalculoNPlacas
 import com.example.placas.data.calculate.Soporte
 import kotlinx.coroutines.launch
@@ -151,10 +153,9 @@ fun NestedScrolling() {
         item {
             MainScreen()
         }
-
-        /*item {
-            RadiationCalculatorScreen()
-        }*/
+        item {
+            Feedback()
+        }
     }
 }
 
@@ -308,6 +309,12 @@ fun EnergyUsageScreen() {
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Tipo de conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        SwitchConection(modifier = Modifier)
+
         val grouped = hourDeviceList.groupBy { it.second }
         val maxEntry = grouped.maxByOrNull { entry ->
             entry.value.sumOf { (name, _, count) ->
@@ -327,11 +334,6 @@ fun EnergyUsageScreen() {
                 color = Color(0xFF163D6D)
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-        Text("Tipo de conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        SwitchConection(modifier = Modifier)
 
         Spacer(modifier = Modifier.height(30.dp))
 
@@ -428,4 +430,33 @@ fun SwitchConection(modifier: Modifier = Modifier){
             .scale(0.7f)
 
     )
+}
+
+@Composable
+fun Feedback() {
+    val context = LocalContext.current
+    val formUrl =
+        "https://docs.google.com/forms/d/e/1FAIpQLSecbmLk06PGJJUoN7BuhtiZNbcx57od5ojs1rbIQE81aL21dg/viewform?usp=header"
+    Spacer(modifier = Modifier.height(16.dp))
+    Text(
+        "Danos tu Opinión",
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Bold,
+        color = Color(0xFF163D6D),
+        fontSize = 25.sp
+    )
+    Button(
+        onClick = {
+            val intent = Intent(Intent.ACTION_VIEW, formUrl.toUri())
+            context.startActivity(intent)
+        },
+        modifier = Modifier.fillMaxWidth().padding(20.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xE1128D93),
+            contentColor = Color.White,
+
+        )
+    ) {
+        Text("Formulario")
+    }
 }
