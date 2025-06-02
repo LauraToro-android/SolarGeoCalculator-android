@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -28,26 +29,21 @@ import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 
-// --------- MODELO DE ESTADO ---------
 data class RegistrationState(
-    var nombre: String = "",
-    var isValidNombre: Boolean = false,
-    var apellidos: String = "",
-    var isValidApellidos: Boolean = false,
     var email: String = "",
     var isValidEmail: Boolean = false,
     var contrasena: String = "",
-    var isValidPassword: Boolean = false,
+    var isValidPasswordFormat: Boolean = false,
     var passwordVisible: Boolean = false,
     var repetirContrasena: String = "",
     var repetirContrasenaVisible: Boolean = false,
-    var isPasswordMatch: Boolean = true,
-    var isRegistering: Boolean = false
+    var doPasswordsMatch: Boolean = true,
+    var isRegistering: Boolean = false,
+    var registrationAttempted: Boolean = false
 )
 
-// --------- VALIDACIONES ---------
 fun isPasswordValid(password: String): Boolean {
-    val pattern = Regex("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#\$%^&+=!]).{8,}\$")
+    val pattern = Regex("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@#\$%^&+=!.]).{8,}\$")
     return pattern.matches(password)
 }
 
@@ -55,96 +51,101 @@ fun isValidEmail(email: String): Boolean {
     return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
 
-// --------- PANTALLA PRINCIPAL ---------
 @Composable
 fun RegisterScreen(auth: FirebaseAuth, navController: NavController) {
     val context = LocalContext.current
     var registrationState by remember { mutableStateOf(RegistrationState()) }
+    val customColor = Color(0xE1128D93)
 
-    registrationState = registrationState.copy(
-        isValidNombre = registrationState.nombre.length >= 3,
-        isValidApellidos = registrationState.apellidos.length >= 3,
-        isValidEmail = isValidEmail(registrationState.email),
-        isValidPassword = isPasswordValid(registrationState.contrasena),
-        isPasswordMatch = registrationState.contrasena == registrationState.repetirContrasena
-    )
+    LaunchedEffect(registrationState.email) {
+        registrationState = registrationState.copy(isValidEmail = isValidEmail(registrationState.email))
+    }
+    LaunchedEffect(registrationState.contrasena) {
+        registrationState = registrationState.copy(isValidPasswordFormat = isPasswordValid(registrationState.contrasena))
+    }
+    LaunchedEffect(registrationState.contrasena, registrationState.repetirContrasena) {
+        registrationState = registrationState.copy(doPasswordsMatch = registrationState.contrasena == registrationState.repetirContrasena)
+    }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
-        Column(
-            modifier = Modifier
-                .align(Alignment.Center)
-                .padding(16.dp)
-                .fillMaxWidth()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        IconButton(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier.padding(start = 15.dp, top = 30.dp)
         ) {
-            Card(
-                modifier = Modifier.padding(12.dp),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Volver",
+                tint = customColor
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(0.9f),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    RowImage()
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        RowImage()
 
-                    RowTextInput(
-                        label = "Nombre",
-                        value = registrationState.nombre,
-                        isValid = registrationState.isValidNombre,
-                        onValueChange = { registrationState = registrationState.copy(nombre = it) }
-                    )
+                        RowEmail(
+                            email = registrationState.email,
+                            emailChange = { registrationState = registrationState.copy(email = it) },
+                            showError = registrationState.registrationAttempted && !registrationState.isValidEmail
+                        )
 
-                    RowTextInput(
-                        label = "Apellidos",
-                        value = registrationState.apellidos,
-                        isValid = registrationState.isValidApellidos,
-                        onValueChange = { registrationState = registrationState.copy(apellidos = it) }
-                    )
+                        RowPassword(
+                            contrasena = registrationState.contrasena,
+                            passwordChange = { registrationState = registrationState.copy(contrasena = it) },
+                            passwordVisible = registrationState.passwordVisible,
+                            passwordVisibleChange = {
+                                registrationState = registrationState.copy(passwordVisible = !registrationState.passwordVisible)
+                            },
+                            showError = registrationState.registrationAttempted && !registrationState.isValidPasswordFormat
+                        )
 
-                    RowEmail(
-                        email = registrationState.email,
-                        emailChange = { registrationState = registrationState.copy(email = it) },
-                        isValid = registrationState.isValidEmail
-                    )
+                        RowRepeatPassword(
+                            contrasena = registrationState.repetirContrasena,
+                            passwordChange = { registrationState = registrationState.copy(repetirContrasena = it) },
+                            passwordVisible = registrationState.repetirContrasenaVisible,
+                            passwordVisibleChange = {
+                                registrationState = registrationState.copy(repetirContrasenaVisible = !registrationState.repetirContrasenaVisible)
+                            },
+                            showError = registrationState.registrationAttempted && !registrationState.doPasswordsMatch
+                        )
 
-                    RowPassword(
-                        contrasena = registrationState.contrasena,
-                        passwordChange = { registrationState = registrationState.copy(contrasena = it) },
-                        passwordVisible = registrationState.passwordVisible,
-                        passwordVisibleChange = {
-                            registrationState = registrationState.copy(passwordVisible = !registrationState.passwordVisible)
-                        },
-                        isValidPassword = registrationState.isValidPassword
-                    )
-
-                    RowRepeatPassword(
-                        contrasena = registrationState.repetirContrasena,
-                        passwordChange = { registrationState = registrationState.copy(repetirContrasena = it) },
-                        passwordVisible = registrationState.repetirContrasenaVisible,
-                        passwordVisibleChange = {
-                            registrationState = registrationState.copy(repetirContrasenaVisible = !registrationState.repetirContrasenaVisible)
-                        },
-                        isValidPassword = registrationState.isPasswordMatch
-                    )
-
-                    RowButtonLogin(
-                        auth = auth,
-                        navController = navController,
-                        email = registrationState.email,
-                        contrasena = registrationState.contrasena,
-                        isValidEmail = registrationState.isValidEmail,
-                        isValidPassword = registrationState.isValidPassword && registrationState.isPasswordMatch,
-                        isRegistering = registrationState.isRegistering,
-                        isRegisteringChange = { registrationState = registrationState.copy(isRegistering = it) },
-                        context = context
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
+                        RowButtonLogin(
+                            auth = auth,
+                            navController = navController,
+                            registrationState = registrationState,
+                            onStateChange = { newState -> registrationState = newState },
+                            context = context,
+                            buttonColor = customColor
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }
     }
 }
 
-// --------- COMPONENTES COMPOSABLES ---------
 @Composable
 fun RowImage() {
     Row(
@@ -160,28 +161,7 @@ fun RowImage() {
 }
 
 @Composable
-fun RowTextInput(
-    label: String,
-    value: String,
-    isValid: Boolean,
-    onValueChange: (String) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(10.dp),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        CustomOutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            label = label,
-            isValid = isValid,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
-        )
-    }
-}
-
-@Composable
-fun RowEmail(email: String, emailChange: (String) -> Unit, isValid: Boolean) {
+fun RowEmail(email: String, emailChange: (String) -> Unit, showError: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(10.dp),
         horizontalArrangement = Arrangement.Center
@@ -190,7 +170,7 @@ fun RowEmail(email: String, emailChange: (String) -> Unit, isValid: Boolean) {
             value = email,
             onValueChange = emailChange,
             label = "Correo electrónico",
-            isValid = isValid,
+            showError = showError,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
     }
@@ -202,13 +182,13 @@ fun RowPassword(
     passwordChange: (String) -> Unit,
     passwordVisible: Boolean,
     passwordVisibleChange: () -> Unit,
-    isValidPassword: Boolean
+    showError: Boolean
 ) {
     OutlinedTextField(
         value = contrasena,
         onValueChange = passwordChange,
         label = { Text("Contraseña") },
-        isError = !isValidPassword,
+        isError = showError,
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -220,7 +200,11 @@ fun RowPassword(
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth().padding(10.dp)
+        modifier = Modifier.fillMaxWidth().padding(10.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = if (!showError) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            unfocusedBorderColor = if (!showError) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.error
+        )
     )
 }
 
@@ -230,13 +214,13 @@ fun RowRepeatPassword(
     passwordChange: (String) -> Unit,
     passwordVisible: Boolean,
     passwordVisibleChange: () -> Unit,
-    isValidPassword: Boolean
+    showError: Boolean
 ) {
     OutlinedTextField(
         value = contrasena,
         onValueChange = passwordChange,
         label = { Text("Repetir Contraseña") },
-        isError = !isValidPassword,
+        isError = showError,
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -248,7 +232,11 @@ fun RowRepeatPassword(
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth().padding(10.dp)
+        modifier = Modifier.fillMaxWidth().padding(10.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = if (!showError) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            unfocusedBorderColor = if (!showError) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.error
+        )
     )
 }
 
@@ -256,40 +244,60 @@ fun RowRepeatPassword(
 fun RowButtonLogin(
     auth: FirebaseAuth,
     navController: NavController,
-    email: String,
-    contrasena: String,
-    isValidEmail: Boolean,
-    isValidPassword: Boolean,
-    isRegistering: Boolean,
-    isRegisteringChange: (Boolean) -> Unit,
-    context: Context
+    registrationState: RegistrationState,
+    onStateChange: (RegistrationState) -> Unit,
+    context: Context,
+    buttonColor: Color
 ) {
     Button(
         onClick = {
-            if (!isValidEmail || !isValidPassword) {
-                Toast.makeText(context, "Datos inválidos", Toast.LENGTH_SHORT).show()
+            val isEmailCurrentlyValid = isValidEmail(registrationState.email)
+            val isPasswordFormatCurrentlyValid = isPasswordValid(registrationState.contrasena)
+            val doPasswordsCurrentlyMatch = registrationState.contrasena == registrationState.repetirContrasena
+
+            var newState = registrationState.copy(
+                isValidEmail = isEmailCurrentlyValid,
+                isValidPasswordFormat = isPasswordFormatCurrentlyValid,
+                doPasswordsMatch = doPasswordsCurrentlyMatch,
+                registrationAttempted = true
+            )
+            onStateChange(newState)
+
+            if (!newState.isValidEmail || !newState.isValidPasswordFormat || !newState.doPasswordsMatch) {
+                Toast.makeText(context, "Por favor, corrige los errores indicados.", Toast.LENGTH_SHORT).show()
                 return@Button
             }
 
-            isRegisteringChange(true)
+            newState = newState.copy(isRegistering = true)
+            onStateChange(newState)
 
-            auth.createUserWithEmailAndPassword(email, contrasena)
+            auth.createUserWithEmailAndPassword(newState.email, newState.contrasena)
                 .addOnCompleteListener { task: Task<AuthResult> ->
-                    isRegisteringChange(false)
+                    val finalState: RegistrationState
                     if (task.isSuccessful) {
                         Toast.makeText(context, "Registro exitoso", Toast.LENGTH_SHORT).show()
-                        navController.navigate("home") // Cambia "home" por tu destino real
+                        finalState = newState.copy(isRegistering = false)
+                        navController.navigate("home") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
                     } else {
                         Log.e("Firebase", "Error al registrar", task.exception)
-                        Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, "Error de registro: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                        finalState = newState.copy(isRegistering = false)
                     }
+                    onStateChange(finalState)
                 }
         },
-        enabled = !isRegistering,
+        enabled = !registrationState.isRegistering,
         modifier = Modifier.fillMaxWidth().padding(10.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
+        colors = ButtonDefaults.buttonColors(
+            containerColor = buttonColor,
+            contentColor = Color.White,
+            disabledContainerColor = Color.LightGray,
+            disabledContentColor = Color.DarkGray
+        )
     ) {
-        Text(if (isRegistering) "Registrando..." else "Registrarse")
+        Text(if (registrationState.isRegistering) "Registrando..." else "Registrarse")
     }
 }
 
@@ -298,19 +306,19 @@ fun CustomOutlinedTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    isValid: Boolean,
+    showError: Boolean,
     keyboardOptions: KeyboardOptions
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        isError = !isValid,
+        isError = showError,
         singleLine = true,
         keyboardOptions = keyboardOptions,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = if (isValid) Color(0xFF6200EE) else Color.Red,
-            unfocusedBorderColor = if (isValid) Color.Gray else Color.Red
+            focusedBorderColor = if (!showError) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            unfocusedBorderColor = if (!showError) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.error
         ),
         modifier = Modifier.fillMaxWidth()
     )

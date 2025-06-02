@@ -52,7 +52,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
- Front
 import androidx.compose.ui.draw.scale
 
 import androidx.lifecycle.ViewModel
