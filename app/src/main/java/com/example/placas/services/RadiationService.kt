@@ -13,6 +13,7 @@ object RadiationService {
      * @param lat Latitud de la ubicación.
      * @param lon Longitud de la ubicación.
      * @return Valor de radiación en formato texto (ej. "1234.56 kWh/m²").
+
      */
     suspend fun fetchAnnualRadiation(lat: Double, lon: Double): String = withContext(Dispatchers.IO) {
         val url = "https://re.jrc.ec.europa.eu/api/MRcalc?lat=$lat&lon=$lon&horirrad=1&outputformat=json"

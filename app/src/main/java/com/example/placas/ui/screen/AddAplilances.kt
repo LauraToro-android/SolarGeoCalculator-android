@@ -303,7 +303,7 @@ fun CampoTexto(label: String, valor: String, onChange: (String) -> Unit) {
 }
 
 
-
+//
 @Preview(showBackground = true)
 @Composable
 fun PreviewInicioPantalla() {

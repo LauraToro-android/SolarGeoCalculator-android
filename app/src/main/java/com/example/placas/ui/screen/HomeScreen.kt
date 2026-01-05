@@ -59,9 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.net.toUri
-import com.example.placas.data.calculate.CalculoNPlacas
 import com.example.placas.data.calculate.Soporte
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(navController: NavController){

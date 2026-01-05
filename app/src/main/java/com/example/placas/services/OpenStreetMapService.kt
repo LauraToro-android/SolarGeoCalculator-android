@@ -35,7 +35,7 @@ object OpenStreetMapService {
 
     /**
      * Crea un MapView simple centrado en una ubicación específica.
-     *
+
      * @param context Contexto necesario para instanciar el MapView.
      * @param lat Latitud de la ubicación inicial del mapa. Valor por defecto: Madrid (40.4168).
      * @param lon Longitud de la ubicación inicial del mapa. Valor por defecto: Madrid (-3.7038).
