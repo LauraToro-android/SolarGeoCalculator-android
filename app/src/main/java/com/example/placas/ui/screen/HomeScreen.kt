@@ -155,10 +155,11 @@ fun NestedScrolling() {
             val energyViewModel: EnergyViewModel = viewModel()
             val navController: NavController = rememberNavController()
             EnergyUsageScreen(viewModel = energyViewModel, navController = navController)
-        }
-        item {
             MainScreen()
         }
+        //item {
+        //    MainScreen()
+        //}
         item {
             Feedback()
         }
@@ -198,8 +199,6 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
 
     val hourDeviceList = remember { mutableStateListOf<Triple<String, Pair<Int, Int>, Int>>() }
 
-    var latitud by remember { mutableStateOf("41.553645") }
-    var longitud by remember { mutableStateOf("-0.707426") }
     var angulo by remember { mutableStateOf("25") }
     var mes by remember { mutableStateOf("12") }
     var potenciaPlacaW by remember { mutableStateOf("500") }
@@ -360,18 +359,6 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
 
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Cálculo de placas solares", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF163D6D))
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // TextFields para parámetros
-        TextField(value = latitud, onValueChange = { latitud = it }, label = { Text("Latitud") })
-        TextField(value = longitud, onValueChange = { longitud = it }, label = { Text("Longitud") })
-        TextField(value = angulo, onValueChange = { angulo = it }, label = { Text("Ángulo de inclinación") })
-        TextField(value = mes, onValueChange = { mes = it }, label = { Text("Mes (1-12)") })
-        TextField(value = potenciaPlacaW, onValueChange = { potenciaPlacaW = it }, label = { Text("Potencia de placa (W)") })
-        TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
-
-        Spacer(modifier = Modifier.height(30.dp))
 
         Card(
             modifier = Modifier
@@ -383,6 +370,18 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 ///parametros modificados para introducir a mano
+                TextField(
+                    value = mes,
+                    onValueChange = {
+                        mes = it
+                        val valorInt = it.toIntOrNull()
+                        if (valorInt != null){
+                            Soporte.mes = valorInt
+                        }
+                        Log.i("Test Mes", "MES: ${Soporte.mes}")
+                    },
+                    label = { Text("Mes (1-12)") }
+                )
                 TextField(
                     value = angulo,
                     onValueChange = {
@@ -428,7 +427,9 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Geocode() // Add location
+
+
+
             }
 
         }

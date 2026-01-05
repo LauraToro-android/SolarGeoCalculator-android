@@ -22,6 +22,8 @@ data class LocationIQResponseItem(
  * Contiene el nombre completo de la dirección y un objeto `Address` más detallado.
  */
 data class ReverseGeocodeResponse(
+    val lat: String,
+    val lon: String,
     val display_name: String,
     val address: Address?
 )
@@ -36,7 +38,8 @@ data class Address(
     val city: String?,
     val state: String?,
     val country: String?,
-    val postcode: String?
+    val postcode: String?,
+
 )
 
 /** INTERFAZ DE RETROFIT **/
@@ -105,7 +108,7 @@ object LocationIQService {
      * @param address Dirección que el usuario introduce.
      * @param onResult Callback que recibe latitud, longitud y nombre completo si hay resultado.
      */
-    fun geocode(address: String, onResult: (lat: String, lon: String, name: String) -> Unit) {
+    fun geocode(address: String, onResult: (lat: String, lon: String, address: String) -> Unit) {
         api.geocodeAddress(API_KEY, address).enqueue(object : Callback<List<LocationIQResponseItem>> {
             override fun onResponse(
                 call: Call<List<LocationIQResponseItem>>,
@@ -116,6 +119,7 @@ object LocationIQService {
                     result?.let {
                         onResult(it.lat, it.lon, it.display_name)
                     } ?: Log.e("LocationIQ", "Sin resultados")
+
                 } else {
                     Log.e("LocationIQ", "Error: ${response.errorBody()?.string()}")
                 }
@@ -135,25 +139,30 @@ object LocationIQService {
      * @param lon Longitud de la ubicación.
      * @param onResult Callback que recibe la dirección legible como String.
      */
-    fun reverseGeocode(lat: String, lon: String, onResult: (address: String) -> Unit) {
+    fun reverseGeocode(lat: String, lon: String, onResult: (address: String, lat: String, lon: String) -> Unit) {
         api.reverseGeocode(API_KEY, lat, lon).enqueue(object : Callback<ReverseGeocodeResponse> {
             override fun onResponse(
                 call: Call<ReverseGeocodeResponse>,
                 response: Response<ReverseGeocodeResponse>
             ) {
                 if (response.isSuccessful) {
-                    val address = response.body()?.display_name ?: "Dirección no encontrada"
-                    onResult(address)
+                    response.body()?.let { body ->
+                        val address = body.display_name ?: "Dirección no encontrada"
+                        val latitud = body.lat ?: lat
+                        val longitud = body.lon ?: lon
+                        onResult(address, latitud, longitud)
+                    }?: onResult("Dirección no encontrada", lat, lon)
                 } else {
                     Log.e("LocationIQ", "Error: ${response.errorBody()?.string()}")
                 }
             }
 
-            override fun onFailure(call: Call<ReverseGeocodeResponse>, t: Throwable) {
-                Log.e("LocationIQ", "Fallo: ${t.message}")
-            }
-        })
+                override fun onFailure(call: Call<ReverseGeocodeResponse>, t: Throwable) {
+                    Log.e("LocationIQ", "Fallo: ${t.message}")
+                }
+            })
     }
+
 
     /** FUNCIONES VERIFICACIÓN **/
 

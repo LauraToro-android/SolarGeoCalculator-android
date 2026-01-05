@@ -20,8 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.placas.services.OpenStreetMapService.obtenerUbicacion
-import com.example.placas.ui.screen.OpenStreetMapView
-import com.example.placas.ui.screen.OpenStreetMapViewWithUbication
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -33,10 +31,10 @@ import kotlinx.coroutines.launch
 object Soporte {
 
     // Variables privadas para almacenar información de ubicación y parámetros de cálculo
-    private var _latitud: Double? = null
-    private var _longitud: Double? = null
+    private var _latitud: Double? = 41.553645
+    private var _longitud: Double? = -0.707426
     private var _anguloInclinacion: Int = 25
-    private var _mes: Int? = null
+    private var _mes: Int? = 12
     private var _potenciaPlacaW: Int = 500
     private var _margen: Double = 0.8
     private var _energiaCalculada: Int = 6000
