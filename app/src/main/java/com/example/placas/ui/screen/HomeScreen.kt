@@ -170,25 +170,45 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
     val imageList = listOf(
         R.drawable.tv2 to "Televisor",
         R.drawable.iron2 to "Plancha",
-        R.drawable.dryer2 to "Secador",
-        R.drawable.razor_blue2 to "Maquinilla azul",
+        R.drawable.razor_blue2 to "Maquinilla",
         R.drawable.router2 to "Router",
-        R.drawable.stove2 to "Estufa",
+        R.drawable.stove2 to "Vitrocerámica",
         R.drawable.vacuum2 to "Aspiradora",
-        R.drawable.dryer_pink2 to "Secador rosado",
-        R.drawable.razor_red2 to "Maquinilla roja"
+        R.drawable.dryer_pink2 to "Secador",
+        R.drawable.frigorifico to "Frigorífico",
+        R.drawable.lavadora to "Lavadora",
+        R.drawable.bombilla to "Bonbilla",
+        R.drawable.led to "Led",
+        R.drawable.calefactor to "Calefactor",
+        R.drawable.horno to "Horno",
+        R.drawable.pc to "PC",
+        R.drawable.videoconsola to "Videoconsola",
+        R.drawable.lavavajillas to "Lavavajillas",
+        R.drawable.termo to "Termotanque",
+        R.drawable.aa to "Aire Acondicionado"
+
     )
 
     val powerConsumption = mapOf(
         "Televisor" to 100,
         "Plancha" to 1200,
-        "Secador" to 1500,
-        "Maquinilla azul" to 10,
+        "Maquinilla" to 10,
         "Router" to 15,
-        "Estufa" to 2000,
+        "Vitrocerámica" to 2000,
         "Aspiradora" to 1400,
-        "Secador rosado" to 1500,
-        "Maquinilla roja" to 10
+        "Secador" to 1500,
+        "Frigorífico" to 500,
+        "Lavadora" to 2500,
+        "Bombilla" to 60,
+        "Led" to 12,
+        "Calefactor" to 2500,
+        "Horno" to 3000,
+        "PC" to 800,
+        "Videoconsola" to 220,
+        "Lavavajillas" to 2000,
+        "Termotanque" to 2500,
+        "Aire Acondicionado" to 3000
+
     )
 
     var selectedDevice by remember { mutableStateOf<String?>(null) }
@@ -337,7 +357,7 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
                 text = "Mayor consumo en: ${range.first}:00-${range.second}:00 con $total W",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF163D6D)
+                color = Color(0xFF043f70)
             )
         }
 
@@ -349,7 +369,7 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
                 viewModel.clearTable()
             },
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF163D6D), contentColor = Color.White))
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xE1128D93), contentColor = Color.White))
             {
                 Text("Limpiar")
             }

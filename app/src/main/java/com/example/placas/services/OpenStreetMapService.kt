@@ -3,6 +3,8 @@ package com.example.placas.services
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
+import android.util.Log
+import android.view.ViewGroup
 import com.google.android.gms.location.LocationServices
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -63,15 +65,31 @@ object OpenStreetMapService {
      * @param lon Longitud del marcador y del centro del mapa.
      * @return Instancia de MapView con marcador incluido.
      */
-    fun crearMapaConUbicacion(context: Context, lat: Double, lon: Double): MapView {
-        val mapView = MapView(context)
-        mapView.setTileSource(TileSourceFactory.MAPNIK)
-        mapView.setMultiTouchControls(true)
+    private var marcadorGlobal: Marker? = null
+    private var mapViewGlobal: MapView? = null
 
-        mapView.controller.setZoom(15.0)
-        mapView.controller.setCenter(GeoPoint(lat, lon))
+    fun crearMapaConUbicacion(
+        context: Context,
+        lat: Double,
+        lon: Double
+    ): MapView {
 
-         // Crea un marcador en la ubicación especificada
+        val mapView = MapView(context).apply {
+
+            // 🔑 ESTO ES LO QUE FALTABA
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+
+            setTileSource(TileSourceFactory.MAPNIK)
+            setMultiTouchControls(true)
+
+            controller.setZoom(15.0)
+            controller.setCenter(GeoPoint(lat, lon))
+        }
+
+        // 📍 Marcador
         val marcador = Marker(mapView).apply {
             position = GeoPoint(lat, lon)
             setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
@@ -79,7 +97,21 @@ object OpenStreetMapService {
         }
 
         mapView.overlays.add(marcador)
+
+        marcadorGlobal = marcador
+        mapViewGlobal = mapView
+
         return mapView
+    }
+
+
+    fun actualizarUbicacion(lat: Double, lon: Double) {
+        val mapView = mapViewGlobal ?: return
+        val marcador = marcadorGlobal ?: return
+
+        marcador.position = GeoPoint(lat, lon)
+        mapView.controller.animateTo(GeoPoint(lat, lon))
+        mapView.invalidate() // fuerza redraw
     }
 
     /**
@@ -98,7 +130,11 @@ object OpenStreetMapService {
             .addOnSuccessListener { location ->
                 if (location != null) {
                     onUbicacionObtenida(location)
+                    Log.d("GPS", "location = $location")
                 }
+                Log.d("GPS", "location = $location")
             }
+
+
     }
 }

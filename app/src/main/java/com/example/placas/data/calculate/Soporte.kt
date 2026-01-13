@@ -1,32 +1,5 @@
 package com.example.placas.data.calculate
 
-import android.Manifest
-import android.util.Log
-import com.example.placas.services.LocationIQService
-import com.example.placas.services.OpenStreetMapService
-import com.example.placas.services.RadiationService
-import android.annotation.SuppressLint
-import android.content.Context
-import android.location.Location
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import com.example.placas.services.OpenStreetMapService.obtenerUbicacion
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 object Soporte {
 

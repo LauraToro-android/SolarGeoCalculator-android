@@ -2,9 +2,12 @@ package com.example.placas.ui.screen
 
 import android.Manifest
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -32,7 +35,11 @@ fun MainScreen() {
     var mapLat by remember { mutableStateOf(Soporte.latitud ?: 40.4168) }
     var mapLon by remember { mutableStateOf(Soporte.longitud ?: -3.7038) }
 
-    Column(modifier = Modifier.padding(16.dp)) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(10.dp)) {
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         SolicitarPermisoUbicacion { lat, lon ->
             mapLat = lat
@@ -63,11 +70,13 @@ fun MainScreen() {
             Soporte.longitud = lon
         }
 
-        Spacer(modifier = Modifier.height(50.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        OpenStreetMapViewWithUbication(mapLat, mapLon)
+        OpenStreetMapViewWithUbication(mapLat, mapLon, modifier = Modifier
+            .fillMaxWidth()
+            .height(350.dp))
 
-        Spacer(modifier = Modifier.height(58.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         var resultadoPlacas by remember { mutableStateOf("") }
         val coroutineScope = rememberCoroutineScope()
@@ -146,7 +155,9 @@ fun Geocode(onLocationSelected: (Double, Double) -> Unit) {
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(1f),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xE1128D93), contentColor = Color.White)
+
         ) {
             Text("Buscar")
         }
@@ -154,6 +165,7 @@ fun Geocode(onLocationSelected: (Double, Double) -> Unit) {
         if (result.isNotEmpty()) {
             Text("Dirección: $result\nLatitud: $latD\nLongitud: $lonD")
         }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -213,7 +225,8 @@ fun ReverseGeoCode(
                     }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(1f),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xE1128D93), contentColor = Color.White)
         ) {
             Text("Buscar dirección")
         }
@@ -228,22 +241,21 @@ fun ReverseGeoCode(
    MAPA
    ====================================================== */
 @Composable
-fun OpenStreetMapViewWithUbication(lat: Double, lon: Double) {
-
+fun OpenStreetMapViewWithUbication(lat: Double, lon: Double, modifier: Modifier = Modifier) {
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        OpenStreetMapService.initConfig(context)
-    }
+    AndroidView(
+        modifier = modifier
+            .clipToBounds(),
+        factory = {
+            OpenStreetMapService.initConfig(context)
+            OpenStreetMapService.crearMapaConUbicacion(context, lat, lon)
+        },
+        update = {
+            OpenStreetMapService.actualizarUbicacion(lat, lon)
+        }
 
-    key(lat, lon) {
-        AndroidView(
-            factory = { crearMapaConUbicacion(it, lat, lon) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-        )
-    }
+    )
 }
 
 /* ======================================================
