@@ -71,7 +71,7 @@ class CalculoNPlacas(
     private val mes: Int,
     private val potenciaPlacaW: Int = 500,
     private val margen: Double = 0.8,
-    private val energiaCalculada: Int = 6000
+    private val energiaCalculada: Int = 0
 ) {
     // Cliente HTTP usando Ktor y deserialización automática con kotlinx.serialization
     private val client = HttpClient(CIO) {

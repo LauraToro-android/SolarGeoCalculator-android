@@ -58,6 +58,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.core.net.toUri
 import com.example.placas.data.calculate.Soporte
 
@@ -222,6 +223,21 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
     var potenciaPlacaW by remember { mutableStateOf("500") }
     var margen by remember { mutableStateOf("0.8") }
 
+    var mesError by remember { mutableStateOf(false) }
+    var anguloError by remember { mutableStateOf(false) }
+    var potenciaError by remember { mutableStateOf(false) }
+    var margenError by remember { mutableStateOf(false) }
+
+    var potenciaTouched by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        Soporte.mes = mes.toIntOrNull()
+        Soporte.anguloInclinacion = angulo.toIntOrNull()
+        Soporte.potenciaPlacaW = potenciaPlacaW.toIntOrNull()
+        Soporte.margen = margen.toDoubleOrNull()
+    }
+
+
     var numeroPlacas by remember { mutableStateOf<Int?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -310,7 +326,32 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
         // Mostrar tabla actual
         Text("Tabla de dispositivos", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-        viewModel.hourDeviceList.forEachIndexed { index, (name, range, count) ->
+        Spacer(modifier = Modifier.height(16.dp))
+        if (viewModel.hourDeviceList.isEmpty()) {
+
+            Text(
+                text = "Seleccione los dispositivos que necesite en todas las franjas horarias que lo vaya a utilizar",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                textAlign = TextAlign.Center
+            )
+
+        } else {
+
+        var expanded by remember { mutableStateOf(false) }
+        val maxItems = 6
+
+        val visibleList = if (expanded) {
+            viewModel.hourDeviceList
+        } else {
+            viewModel.hourDeviceList.take(maxItems)
+        }
+
+
+        visibleList.forEachIndexed { index, (name, range, count) ->
             val power = powerConsumption[name] ?: 0
             Row(
                 modifier = Modifier
@@ -321,7 +362,8 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
             ) {
                 Column {
                     Text(name)
-                    Text("${range.first}:00-${range.second}:00")
+                    Text(getMergedRangeText(name, visibleList))
+
                 }
                 Text("x$count")
                 Text("${power * count} W")
@@ -334,11 +376,18 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
                 }
             }
         }
+        Spacer(modifier = Modifier.height(4.dp))
+        if (viewModel.hourDeviceList.size > maxItems) {
+            TextButton(
+                onClick = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (expanded) "Ver menos" else "Ver más")
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Tipo de conexión", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(16.dp))
-        SwitchConection(modifier = Modifier)
+
 
         // Cálculo del mayor consumo
         val grouped = viewModel.hourDeviceList.groupBy { it.second }
@@ -359,6 +408,7 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF043f70)
             )
+            }
         }
 
         Row (horizontalArrangement = Arrangement.spacedBy(8.dp), // espacio entre botones
@@ -376,7 +426,7 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
         }
 
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Card(
             modifier = Modifier
@@ -392,55 +442,100 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
                     value = mes,
                     onValueChange = {
                         mes = it
+                        potenciaTouched = true
                         val valorInt = it.toIntOrNull()
-                        if (valorInt != null){
-                            Soporte.mes = valorInt
-                        }
+                        mesError = it.isBlank() || (valorInt == null || valorInt !in 1..12)
+
+                        Soporte.mes = valorInt
+
                         Log.i("Test Mes", "MES: ${Soporte.mes}")
                     },
-                    label = { Text("Mes (1-12)") }
+                    label = { Text("Mes (1-12)") },
+                    isError = potenciaTouched && mesError,
+                    supportingText = {
+                        if (potenciaTouched && mesError) {
+                            if (mes.isBlank()) {
+                                Text("Este campo es obligatorio")
+                            } else {
+                                Text("Introduce un mes válido entre 1 y 12")
+                            }
+                        }
+                    }
                 )
                 TextField(
                     value = angulo,
                     onValueChange = {
                         angulo = it
+                        potenciaTouched = true
                         val valorInt = it.toIntOrNull()
-                        if (valorInt != null) {
-                            Soporte.anguloInclinacion = valorInt
-                        }
+                        anguloError = it.isBlank() || (valorInt == null || valorInt !in 0..90)
+
+                        Soporte.anguloInclinacion = valorInt
+
                         Log.i("Test Angulo", "ANGULO: ${Soporte.anguloInclinacion}")
                     },
-                    label = { Text("Ángulo de inclinación") }
+                    label = { Text("Ángulo de inclinación (0-90)") },
+                    isError = potenciaTouched && anguloError,
+                    supportingText = {
+                        if (potenciaTouched && anguloError) {
+                            if (angulo.isBlank()) {
+                                Text("Este campo es obligatorio")
+                            } else {
+                                Text("Introduce un ángulo válido entre 0 y 90")
+                            }
+                        }
+                    }
                 )
 
                 TextField(
                     value = potenciaPlacaW,
                     onValueChange = {
                         potenciaPlacaW = it
+                        potenciaTouched = true
 
                         val valorInt = it.toIntOrNull()
-                        if (valorInt != null) {
-                            Soporte.potenciaPlacaW = valorInt
-                        }
-                        Log.i("Test Potencia", "POTENCIA: ${Soporte.potenciaPlacaW}")
-                    },
-                    label = { Text("Potencia de placa (W)") }
-                )
 
-                //TextField(value = margen, onValueChange = { margen = it }, label = { Text("Margen (0-1)") })
+                        potenciaError =
+                            it.isBlank() || (valorInt == null || valorInt !in 250..700)
+
+                        Soporte.potenciaPlacaW = valorInt
+                    },
+                    label = { Text("Potencia de placa (W)") },
+                    isError = potenciaTouched && potenciaError,
+                    supportingText = {
+                        if (potenciaTouched && potenciaError) {
+                            if (potenciaPlacaW.isBlank()) {
+                                Text("Este campo es obligatorio")
+                            } else {
+                                Text("Introduce una potencia entre 250 y 700")
+                            }
+                        }
+                    }
+                )
 
                 TextField(
                     value = margen,
                     onValueChange = {
                         margen = it
-
+                        potenciaTouched = true
                         val valorDouble = it.toDoubleOrNull()
-                        if (valorDouble != null && valorDouble in 0.0..1.0) {
-                            Soporte.margen = valorDouble
-                        }
+                        margenError = it.isBlank() || (valorDouble == null || valorDouble !in 0.0..1.0)
+
+                        Soporte.margen = valorDouble
+
                         Log.i("Test Potencia", "POTENCIA: ${Soporte.margen}")
                     },
-                    label = { Text("Margen (0-1)") }
+                    label = { Text("Margen (0-1)") },
+                    isError = potenciaTouched && margenError,
+                    supportingText = {
+                        if (potenciaTouched && margenError) {
+                            if (margen.isBlank()) {
+                                Text("Este campo es obligatorio")
+                            } else {
+                                Text("Introduce un margen válido entre 0 y 1")
+                            }
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -457,35 +552,6 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
 @Composable
 fun ShowMyFirstColumn() {
     NestedScrolling()
-}
-
-@Composable
-fun SwitchConection(modifier: Modifier = Modifier){
-    var isChecked by remember { mutableStateOf(true) }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-
-    ){
-      Text(
-          text = if (isChecked) "Aislado" else "Mixto",
-      )
-    }
-
-    Switch(
-        checked = isChecked,
-        onCheckedChange = { isChecked = it },
-        colors = SwitchDefaults.colors(
-            checkedThumbColor = Color.Black,
-            uncheckedThumbColor = Color.Black,
-            checkedTrackColor = Color(0xE1128D93),
-            uncheckedTrackColor = Color.LightGray),
-        modifier = Modifier
-            .scale(0.7f)
-
-    )
 }
 
 @Composable
@@ -516,6 +582,35 @@ fun Feedback() {
         Text("Formulario")
     }
 }
+
+fun getMergedRangeText(
+    deviceName: String,
+    list: List<Triple<String, Pair<Int, Int>, Int>>
+): String {
+
+    val ranges = list
+        .filter { it.first == deviceName }
+        .map { it.second }
+        .sortedBy { it.first }
+
+    if (ranges.isEmpty()) return ""
+
+    var start = ranges.first().first
+    var end = ranges.first().second
+
+    for (i in 1 until ranges.size) {
+        val current = ranges[i]
+        if (current.first == end) {
+            end = current.second
+        } else {
+            break
+        }
+    }
+
+    return "$start:00-$end:00"
+}
+
+
 
 
 class EnergyViewModel : ViewModel() {

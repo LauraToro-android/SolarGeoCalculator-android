@@ -6,6 +6,7 @@ import android.location.Location
 import android.util.Log
 import android.view.ViewGroup
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
@@ -124,17 +125,22 @@ object OpenStreetMapService {
      */
     @SuppressLint("MissingPermission")
     fun obtenerUbicacion(context: Context, onUbicacionObtenida: (Location) -> Unit) {
+
         val locationProvider = LocationServices.getFusedLocationProviderClient(context)
 
-        locationProvider.lastLocation
-            .addOnSuccessListener { location ->
-                if (location != null) {
-                    onUbicacionObtenida(location)
-                    Log.d("GPS", "location = $location")
-                }
-                Log.d("GPS", "location = $location")
+        locationProvider.getCurrentLocation(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            null
+        ).addOnSuccessListener { location ->
+
+            if (location != null) {
+                Log.d("GPS", "location = ${location.latitude}, ${location.longitude}")
+                onUbicacionObtenida(location)
+            } else {
+                Log.d("GPS", "location = null (no se pudo obtener)")
             }
-
-
+        }.addOnFailureListener {
+            Log.d("GPS", "error obteniendo ubicación: ${it.message}")
+        }
     }
 }

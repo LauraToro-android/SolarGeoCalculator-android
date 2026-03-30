@@ -6,11 +6,11 @@ object Soporte {
     // Variables privadas para almacenar información de ubicación y parámetros de cálculo
     private var _latitud: Double? = 41.553645
     private var _longitud: Double? = -0.707426
-    private var _anguloInclinacion: Int = 25
-    private var _mes: Int? = 12
-    private var _potenciaPlacaW: Int = 500
-    private var _margen: Double = 0.8
-    private var _energiaCalculada: Int = 6000
+    private var _anguloInclinacion: Int? = null
+    private var _mes: Int? = null
+    private var _potenciaPlacaW: Int? = null
+    private var _margen: Double? = null
+    private var _energiaCalculada: Int = 0
 
     // Getters y Setters públicos
     var latitud: Double?
@@ -25,7 +25,7 @@ object Soporte {
             _longitud = value
         }
 
-    var anguloInclinacion: Int
+    var anguloInclinacion: Int?
         get() = _anguloInclinacion
         set(value) {
             _anguloInclinacion = value
@@ -37,13 +37,13 @@ object Soporte {
             _mes = value
         }
 
-    var potenciaPlacaW: Int
+    var potenciaPlacaW: Int?
         get() = _potenciaPlacaW
         set(value) {
             _potenciaPlacaW = value
         }
 
-    var margen: Double
+    var margen: Double?
         get() = _margen
         set(value) {
             _margen = value
