@@ -4,6 +4,7 @@ import android.Manifest
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -78,6 +79,8 @@ fun MainScreen() {
         var resultadoPlacas by remember { mutableStateOf("") }
         var cargando by remember { mutableStateOf(false) }
 
+        var loading by remember { mutableStateOf(false) }
+
         val coroutineScope = rememberCoroutineScope()
         val context = LocalContext.current
         val permiso = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -85,6 +88,7 @@ fun MainScreen() {
         Button(
             onClick = {
                 if (permiso.status.isGranted) {
+                    loading = true
                     obtenerUbicacion(context) { location ->
                         val lat = location.latitude
                         val lon = location.longitude
@@ -93,18 +97,30 @@ fun MainScreen() {
                         mapLon = lon
                         Soporte.latitud = lat
                         Soporte.longitud = lon
+
+                        loading = false
                     }
                 } else {
                     permiso.launchPermissionRequest()
                 }
             },
+            enabled = !loading,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xE1128D93),
                 contentColor = Color.White
             )
         ) {
-            Text("Usar mi ubicación 📍")
+            if (loading){
+                CircularProgressIndicator(
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(20.dp)
+                )
+            }else{
+                Text("Usar mi ubicación 📍")
+            }
+
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -118,6 +134,7 @@ fun MainScreen() {
                 val errores = validarDatos()
 
                 if (errores.isNotEmpty()) {
+                    resultadoPlacas = "" // Limpia el resultado si hay errores
                     if (errores.size > 2) {
                         Toast.makeText(
                             context,
@@ -273,7 +290,7 @@ fun Geocode(onLocationSelected: (Double, Double) -> Unit) {
 }
 
 /* ======================================================
-   REVERSE GEOCODE (AHORA FUNCIONA)
+   REVERSE GEOCODE
    ====================================================== */
 @Composable
 fun ReverseGeoCode(
@@ -287,9 +304,10 @@ fun ReverseGeoCode(
     var result by remember { mutableStateOf("") }
     var latError by remember { mutableStateOf(false) }
     var lonError by remember { mutableStateOf(false) }
+    var searchId by remember { mutableStateOf(0) }
+    var fromSearch by remember { mutableStateOf(false) }
+
     var context = LocalContext.current
-
-
 
 
 
@@ -303,6 +321,11 @@ fun ReverseGeoCode(
         latError = false
         lonError = false
 
+        if (fromSearch) {
+            fromSearch = false   // 👈 no limpiar
+        } else {
+            result = ""          // 👈 solo limpiar cambios externos
+        }
     }
 
     Column {
@@ -312,6 +335,8 @@ fun ReverseGeoCode(
             value = latText,
             onValueChange = {
                 latText = it
+                result = "" // 👈 reinicia resultado
+
                 val latDouble = it.toDoubleOrNull()
                 latError = it.isBlank() || (latDouble == null || latDouble !in -90.0..90.0)
                 Soporte.latitud = latDouble
@@ -332,6 +357,8 @@ fun ReverseGeoCode(
             value = lonText,
             onValueChange = {
                 lonText = it
+                result = "" // 👈 reinicia resultado
+
                 val lonDouble = it.toDoubleOrNull()
                 lonError = it.isBlank() || (lonDouble == null || lonDouble !in -180.0..180.0)
                 Soporte.longitud = lonDouble
@@ -350,13 +377,13 @@ fun ReverseGeoCode(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+
         Button(
             onClick = {
                 val la = latText.toDoubleOrNull()
                 val lo = lonText.toDoubleOrNull()
                 val latValida = la != null && la in -90.0..90.0
                 val lonValida = lo != null && lo in -180.0..180.0
-
                 // 🔹 Recalculamos errores
                 latError = !latValida
                 lonError = !lonValida
@@ -364,10 +391,15 @@ fun ReverseGeoCode(
                     Toast.makeText(context, "Coordenadas no válidas", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
+                searchId++
+                val currentSearchId = searchId
+                fromSearch = true
+
                 LocationIQService.reverseGeocode(
                     la.toString(),
                     lo.toString()
                 ) { address, apiLat, apiLon ->
+                    if (currentSearchId != searchId) return@reverseGeocode
                     result = address
                     onLocationSelected(
                         apiLat.toDoubleOrNull() ?: la,

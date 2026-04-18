@@ -76,7 +76,7 @@ fun HomeScreen(navController: NavController){
 @Composable
 fun Toolbar(navController: NavController){
     TopAppBar(
-        title = { Text(text = "Placas") },
+        title = {},
         colors = TopAppBarDefaults.mediumTopAppBarColors(
             containerColor = Color.Transparent
         ),
@@ -109,6 +109,7 @@ fun ShowTitle()
     Row(
         modifier = Modifier
         .fillMaxWidth()
+        .padding(10.dp)
     ) { Text(
         text = getCompanyName(),
         color = Color(0xFF043f70),
@@ -123,11 +124,12 @@ fun ShowBanner() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .height(200.dp)
             .padding(bottom = 10.dp)
 
     ) {
         Image(
-            painter = painterResource(R.drawable.portada),
+            painter = painterResource(R.drawable.inicio),
             contentDescription = "Banner",
             modifier = Modifier.fillMaxWidth(),
             contentScale = ContentScale.Crop
@@ -144,8 +146,7 @@ fun NestedScrolling() {
     ){
         item{
             Spacer(modifier = Modifier.height(40.dp))
-            ShowTitle(
-            )
+            ShowTitle()
         }
         item{
             ShowBanner()
@@ -416,6 +417,7 @@ fun EnergyUsageScreen(viewModel: EnergyViewModel, navController: NavController) 
         {
 
             Button(onClick = {
+
                 viewModel.clearTable()
             },
                 modifier = Modifier.weight(1f),
@@ -629,5 +631,6 @@ class EnergyViewModel : ViewModel() {
 
     fun clearTable() {
         hourDeviceList.clear()
+        Soporte.energiaCalculada = 0
     }
 }

@@ -57,13 +57,15 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
             .fillMaxSize()
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+
     ) {
         item {
             Image(
-                painter = painterResource(id = R.drawable.logoplacas),
+                painter = painterResource(id = R.drawable.imglogin),
                 contentDescription = "Logo de la aplicación",
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.fillMaxSize()
+                    .padding(top =  30.dp, bottom = 30.dp)
+
             )
         }
 
@@ -77,8 +79,8 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
                 label = { Text("Correo electrónico") },
                 isError = isError,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                    .fillMaxWidth(),
+
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFFE8DFDF),
                     unfocusedContainerColor = Color(0xFFE8DFDF),
@@ -102,7 +104,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
                 isError = isError,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(top = 32.dp),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFFE8DFDF),
                     unfocusedContainerColor = Color(0xFFE8DFDF),
@@ -116,6 +118,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
 
         if (isError) {
             item {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text("Usuario o contraseña incorrectos", color = Color.Red)
             }
         }
@@ -126,7 +129,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
                 enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(top = 32.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xE1128D93)
                 )
@@ -146,6 +149,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
                 modifier = Modifier.clickable {
                     navController.navigate("forgot_password")
                 }
+                    .padding(top = 16.dp)
             )
         }
 
@@ -156,7 +160,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavController) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(top = 16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xE1128D93)
                 )

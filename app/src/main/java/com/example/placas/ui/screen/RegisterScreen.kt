@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -67,14 +68,77 @@ fun RegisterScreen(auth: FirebaseAuth, navController: NavController) {
         registrationState = registrationState.copy(doPasswordsMatch = registrationState.contrasena == registrationState.repetirContrasena)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+
+
+
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+
+            item {
+
+            }
+            item {
+                RowImage()
+            }
+
+            item {
+                RowEmail(
+                    email = registrationState.email,
+                    emailChange = { registrationState = registrationState.copy(email = it) },
+                    showError = registrationState.registrationAttempted &&
+                            (registrationState.email.isEmpty() || !registrationState.isValidEmail)
+                )
+            }
+
+            item {
+                RowPassword(
+                    contrasena = registrationState.contrasena,
+                    passwordChange = { registrationState = registrationState.copy(contrasena = it) },
+                    passwordVisible = registrationState.passwordVisible,
+                    passwordVisibleChange = {
+                        registrationState = registrationState.copy(passwordVisible = !registrationState.passwordVisible)
+                    },
+                    showError = registrationState.registrationAttempted &&
+                            (registrationState.contrasena.isEmpty() || !registrationState.isValidPasswordFormat)
+                )
+            }
+
+            item {
+                RowRepeatPassword(
+                    contrasena = registrationState.repetirContrasena,
+                    passwordChange = { registrationState = registrationState.copy(repetirContrasena = it) },
+                    passwordVisible = registrationState.repetirContrasenaVisible,
+                    passwordVisibleChange = {
+                        registrationState = registrationState.copy(repetirContrasenaVisible = !registrationState.repetirContrasenaVisible)
+                    },
+                    showError = registrationState.registrationAttempted &&
+                            (registrationState.repetirContrasena.isEmpty() || !registrationState.doPasswordsMatch)
+                )
+            }
+
+            item {
+                RowButtonLogin(
+                    auth = auth,
+                    navController = navController,
+                    registrationState = registrationState,
+                    onStateChange = { newState -> registrationState = newState },
+                    context = context,
+                    buttonColor = customColor
+                )
+            }
+        }
         IconButton(
             onClick = { navController.popBackStack() },
-            modifier = Modifier.padding(start = 15.dp, top = 30.dp)
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp, top = 25.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -82,78 +146,18 @@ fun RegisterScreen(auth: FirebaseAuth, navController: NavController) {
                 tint = customColor
             )
         }
-
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .fillMaxWidth(0.9f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 20.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        RowImage()
-
-                        RowEmail(
-                            email = registrationState.email,
-                            emailChange = { registrationState = registrationState.copy(email = it) },
-                            showError = registrationState.registrationAttempted && !registrationState.isValidEmail
-                        )
-
-                        RowPassword(
-                            contrasena = registrationState.contrasena,
-                            passwordChange = { registrationState = registrationState.copy(contrasena = it) },
-                            passwordVisible = registrationState.passwordVisible,
-                            passwordVisibleChange = {
-                                registrationState = registrationState.copy(passwordVisible = !registrationState.passwordVisible)
-                            },
-                            showError = registrationState.registrationAttempted && !registrationState.isValidPasswordFormat
-                        )
-
-                        RowRepeatPassword(
-                            contrasena = registrationState.repetirContrasena,
-                            passwordChange = { registrationState = registrationState.copy(repetirContrasena = it) },
-                            passwordVisible = registrationState.repetirContrasenaVisible,
-                            passwordVisibleChange = {
-                                registrationState = registrationState.copy(repetirContrasenaVisible = !registrationState.repetirContrasenaVisible)
-                            },
-                            showError = registrationState.registrationAttempted && !registrationState.doPasswordsMatch
-                        )
-
-                        RowButtonLogin(
-                            auth = auth,
-                            navController = navController,
-                            registrationState = registrationState,
-                            onStateChange = { newState -> registrationState = newState },
-                            context = context,
-                            buttonColor = customColor
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                }
-            }
-        }
     }
+
 }
 
 @Composable
 fun RowImage() {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(10.dp),
+        modifier = Modifier.fillMaxWidth().padding(top = 30.dp),
         horizontalArrangement = Arrangement.Center
     ) {
         Image(
-            modifier = Modifier.width(100.dp),
+            modifier = Modifier.width(200.dp),
             painter = painterResource(id = R.drawable.login),
             contentDescription = "Imagen login"
         )
@@ -162,18 +166,15 @@ fun RowImage() {
 
 @Composable
 fun RowEmail(email: String, emailChange: (String) -> Unit, showError: Boolean) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(10.dp),
-        horizontalArrangement = Arrangement.Center
-    ) {
         CustomOutlinedTextField(
             value = email,
             onValueChange = emailChange,
             label = "Correo electrónico",
             showError = showError,
+
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
         )
-    }
+
 }
 
 @Composable
@@ -189,6 +190,11 @@ fun RowPassword(
         onValueChange = passwordChange,
         label = { Text("Contraseña") },
         isError = showError,
+        supportingText = {
+            if (showError) {
+                Text("La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial")
+            }
+        },
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -200,10 +206,15 @@ fun RowPassword(
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth().padding(10.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = if (!showError) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-            unfocusedBorderColor = if (!showError) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.error
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFFE8DFDF),
+            unfocusedContainerColor = Color(0xFFE8DFDF),
+            focusedIndicatorColor = if (showError) Color.Red else Color(0xFF006064),
+            unfocusedIndicatorColor = if (showError) Color.Red else Color.Gray,
+            errorIndicatorColor = Color.Red
         )
     )
 }
@@ -221,6 +232,11 @@ fun RowRepeatPassword(
         onValueChange = passwordChange,
         label = { Text("Repetir Contraseña") },
         isError = showError,
+        supportingText = {
+            if (showError) {
+                Text("Las contraseñas no coinciden")
+            }
+        },
         singleLine = true,
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
@@ -232,10 +248,15 @@ fun RowRepeatPassword(
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        modifier = Modifier.fillMaxWidth().padding(10.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = if (!showError) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-            unfocusedBorderColor = if (!showError) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.error
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFFE8DFDF),
+            unfocusedContainerColor = Color(0xFFE8DFDF),
+            focusedIndicatorColor = if (showError) Color.Red else Color(0xFF006064),
+            unfocusedIndicatorColor = if (showError) Color.Red else Color.Gray,
+            errorIndicatorColor = Color.Red
         )
     )
 }
@@ -282,14 +303,28 @@ fun RowButtonLogin(
                         }
                     } else {
                         Log.e("Firebase", "Error al registrar", task.exception)
-                        Toast.makeText(context, "Error de registro: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                        val errorMessage = when (task.exception) {
+                            is com.google.firebase.auth.FirebaseAuthUserCollisionException ->
+                                "Este correo ya está registrado"
+
+                            is com.google.firebase.auth.FirebaseAuthWeakPasswordException ->
+                                "La contraseña es demasiado débil"
+
+                            is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException ->
+                                "El formato del correo no es válido"
+
+                            else ->
+                                "Error inesperado. Inténtalo de nuevo"
+                        }
+
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                         finalState = newState.copy(isRegistering = false)
                     }
                     onStateChange(finalState)
                 }
         },
         enabled = !registrationState.isRegistering,
-        modifier = Modifier.fillMaxWidth().padding(10.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
             containerColor = buttonColor,
             contentColor = Color.White,
@@ -314,12 +349,23 @@ fun CustomOutlinedTextField(
         onValueChange = onValueChange,
         label = { Text(label) },
         isError = showError,
+        supportingText = {
+            if (showError) {
+                Text("Por favor, introduce un valor email válido")
+            }
+        },
         singleLine = true,
         keyboardOptions = keyboardOptions,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = if (!showError) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-            unfocusedBorderColor = if (!showError) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.error
-        ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color(0xFFE8DFDF),
+            unfocusedContainerColor = Color(0xFFE8DFDF),
+            focusedIndicatorColor = if (showError) Color.Red else Color(0xFF006064),
+            unfocusedIndicatorColor = if (showError) Color.Red else Color.Gray,
+            errorIndicatorColor = Color.Red
+        )
     )
 }

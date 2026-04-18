@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx. compose. material. icons. automirrored. filled. ExitToApp
+import androidx.compose.material.icons.filled.Info
 
 
 @Composable
@@ -27,12 +28,8 @@ fun DropDownMenu(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-        Box( modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, end = 16.dp),
-            contentAlignment = Alignment.TopEnd)
-        {
-            IconButton(onClick = { expanded = !expanded }) {
+        Box{
+            IconButton(onClick = { expanded = true }) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = "Abrir menú"
@@ -42,15 +39,15 @@ fun DropDownMenu(
             DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
-                offset = DpOffset(x = (200).dp, y = 0.dp)
+
             ) {
                 DropdownMenuItem(
-                    text = { Text("Configuración") },
+                    text = { Text("Información") },
                     leadingIcon = {
                         Icon(
-                            imageVector = Icons.Filled.Settings,
+                            imageVector = Icons.Filled.Info,
                             contentDescription = "Icono de Configuración",
-                            tint = Color.Black
+
                         )
                     },
                     onClick = {
@@ -64,7 +61,6 @@ fun DropDownMenu(
                         Icon(
                             imageVector = Icons. AutoMirrored. Filled. ExitToApp,
                             contentDescription = "Icono de Cerrar Sesión",
-                            tint = Color.Black
                         )
                     },
                     onClick = {
