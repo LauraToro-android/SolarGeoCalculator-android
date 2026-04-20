@@ -40,7 +40,25 @@ fun MainScreen() {
     var mapLat by remember { mutableStateOf(Soporte.latitud ?: 40.4168) }
     var mapLon by remember { mutableStateOf(Soporte.longitud ?: -3.7038) }
 
+    var gpsResult by remember { mutableStateOf("") }
+    var fromGpsSearch by remember { mutableStateOf(false) }
 
+    var resultadoPlacas by remember { mutableStateOf("") }
+    var cargando by remember { mutableStateOf(false) }
+
+    var loading by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val permiso = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
+
+    LaunchedEffect(mapLat, mapLon) {
+        if (fromGpsSearch) {
+            fromGpsSearch = false   // 👈 cambio viene del GPS → no limpiar
+        } else {
+            gpsResult = ""          // 👈 cambio externo → limpiar
+        }
+    }
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -48,7 +66,10 @@ fun MainScreen() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        Geocode { lat, lon ->
+        Geocode(
+            mapLat = mapLat,
+            mapLon = mapLon
+        ) { lat, lon ->
             mapLat = lat
             mapLon = lon
             Soporte.latitud = lat
@@ -76,19 +97,13 @@ fun MainScreen() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        var resultadoPlacas by remember { mutableStateOf("") }
-        var cargando by remember { mutableStateOf(false) }
-
-        var loading by remember { mutableStateOf(false) }
-
-        val coroutineScope = rememberCoroutineScope()
-        val context = LocalContext.current
-        val permiso = rememberPermissionState(Manifest.permission.ACCESS_FINE_LOCATION)
 
         Button(
             onClick = {
                 if (permiso.status.isGranted) {
+                    fromGpsSearch = true
                     loading = true
+                    gpsResult = ""
                     obtenerUbicacion(context) { location ->
                         val lat = location.latitude
                         val lon = location.longitude
@@ -98,7 +113,16 @@ fun MainScreen() {
                         Soporte.latitud = lat
                         Soporte.longitud = lon
 
-                        loading = false
+                        LocationIQService.reverseGeocode(lat.toString(), lon.toString()) {
+                                address, apiLat, apiLon ->
+                            gpsResult = if (address.isNotEmpty()) {
+                                "Mi ubicación: $address\nLat: $lat\nLon: $lon"
+                            } else{
+                                "Mi ubicación:\nLat: $lat\nLon: $lon"
+                            }
+
+                            loading = false
+                        }
                     }
                 } else {
                     permiso.launchPermissionRequest()
@@ -121,6 +145,9 @@ fun MainScreen() {
                 Text("Usar mi ubicación 📍")
             }
 
+        }
+        if (gpsResult.isNotEmpty()) {
+            Text(gpsResult)
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -219,7 +246,7 @@ fun MainScreen() {
    GEOCODE
    ====================================================== */
 @Composable
-fun Geocode(onLocationSelected: (Double, Double) -> Unit) {
+fun Geocode(mapLat: Double, mapLon: Double,onLocationSelected: (Double, Double) -> Unit) {
 
     var text by remember { mutableStateOf("") }
     var result by remember { mutableStateOf("") }
@@ -227,10 +254,20 @@ fun Geocode(onLocationSelected: (Double, Double) -> Unit) {
     var lonD by remember { mutableStateOf("") }
 
     var touched by remember { mutableStateOf(false) }
-    var context = LocalContext.current
+    var searching by remember { mutableStateOf(false) }
+    var fromSearch by remember { mutableStateOf(false) }
 
+    LaunchedEffect(mapLat, mapLon) {
 
-
+        if (fromSearch) {
+            fromSearch = false   // 👈 cambio propio → NO limpiar
+        } else {
+            result = ""          // 👈 cambio externo → limpiar
+            latD = ""
+            lonD = ""
+            touched = false
+        }
+    }
 
 
 
@@ -248,28 +285,32 @@ fun Geocode(onLocationSelected: (Double, Double) -> Unit) {
 
         Button(
             onClick = {
+                fromSearch = true
                 touched = true
+                searching = true
                 result = ""
 
                 LocationIQService.geocode(text) { lat, lon, address ->
+
                     val la = lat.toDoubleOrNull()
                     val lo = lon.toDoubleOrNull()
 
-                    // 🔴 Si falla la búsqueda
+                    searching = false
+
                     if (la == null || lo == null || address.isEmpty()) {
-                        result = "" // 🔥 importante para activar el error
+                        result = ""
+                        fromSearch = false
                         return@geocode
                     }
+
+                    Soporte.latitud = la
+                    Soporte.longitud = lo
+                    onLocationSelected(la, lo)
+
                     result = address
                     latD = lat
                     lonD = lon
-                    lat.toDoubleOrNull()?.let { la ->
-                        lon.toDoubleOrNull()?.let { lo ->
-                            Soporte.latitud = la
-                            Soporte.longitud = lo
-                            onLocationSelected(la, lo)
-                        }
-                    }
+
                 }
             },
             modifier = Modifier.fillMaxWidth(1f),
@@ -282,7 +323,7 @@ fun Geocode(onLocationSelected: (Double, Double) -> Unit) {
         if (result.isNotEmpty()) {
             Text("Dirección: $result\nLatitud: $latD\nLongitud: $lonD")
         }
-        if (touched && result.isEmpty()){
+        if (touched && !searching && result.isEmpty()){
             Text("Dirección no válida", color = Color.Red)
         }
         Spacer(modifier = Modifier.height(16.dp))
